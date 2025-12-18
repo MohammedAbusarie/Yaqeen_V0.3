@@ -180,4 +180,16 @@ try {
 const footerYearEl = document.getElementById("footerYear");
 if (footerYearEl) footerYearEl.textContent = String(new Date().getFullYear());
 
+// Splash screen fade-out
+const splashScreen = document.getElementById("splashScreen");
+if (splashScreen) {
+  // Fade out after 1.5 seconds
+  setTimeout(() => {
+    splashScreen.classList.add("fade-out");
+    // Remove from DOM after animation completes
+    setTimeout(() => {
+      splashScreen.remove();
+    }, 350); // Match transition-slow duration
+  }, 1500);
+}
 
