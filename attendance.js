@@ -447,6 +447,9 @@ function getSearchBoundsForKind({ kind, colSection, colLecture, maxCol1 }) {
   }
   if (kind === "lecture") {
     if (!colLecture) return { startCol1: 1, endCol1: 0, kind: "lecture" }; // empty range
+    // Based on actual Excel structure analysis: lecture week columns (W1, W2, W3...) start
+    // at the same column where "Attendance Lecture" header is found in row 1.
+    // Section week columns end at colLecture - 1, so lecture starts at colLecture.
     return { startCol1: colLecture, endCol1: maxCol1, kind: "lecture" };
   }
   // unknown: scan everything, but keep kind as unknown
@@ -533,6 +536,8 @@ export function listColumnOptions(workbook, scope) {
             const entry = byHeaderText.get(headerLower);
             entry.locations.push(loc);
             // Upgrade from unknown to detected kind if found in rows 2-5
+            // Note: We'll split by column ranges in the final conversion step,
+            // so we don't need to worry about section vs lecture conflicts here
             if (entry.kind === "unknown" && kind !== "unknown") {
               entry.kind = kind;
             }
@@ -541,21 +546,97 @@ export function listColumnOptions(workbook, scope) {
       }
     }
 
-    // Now convert to byKey format
+    // Now convert to byKey format, splitting locations by their actual column ranges
+    // This ensures that headers appearing in both section and lecture areas get separate entries
     for (const [headerLower, entry] of byHeaderText) {
-      const key = `${entry.kind}::${entry.headerText}`;
-      if (!byKey.has(key)) {
-        byKey.set(key, {
-          key,
-          headerText: entry.headerText,
-          kind: entry.kind,
-          occurrences: entry.locations.length,
-          locations: entry.locations,
-        });
-      } else {
-        const opt = byKey.get(key);
-        opt.occurrences += entry.locations.length;
-        opt.locations.push(...entry.locations);
+      if (!colSection || !colLecture) {
+        // No section/lecture boundaries detected, use entry as-is
+        const key = `${entry.kind}::${entry.headerText}`;
+        if (!byKey.has(key)) {
+          byKey.set(key, {
+            key,
+            headerText: entry.headerText,
+            kind: entry.kind,
+            occurrences: entry.locations.length,
+            locations: entry.locations,
+          });
+        } else {
+          const opt = byKey.get(key);
+          opt.occurrences += entry.locations.length;
+          opt.locations.push(...entry.locations);
+        }
+        continue;
+      }
+
+      // Split locations by section vs lecture column ranges
+      const sectionLocations = [];
+      const lectureLocations = [];
+      const unknownLocations = [];
+
+      for (const loc of entry.locations) {
+        // Determine which range this location falls into
+        // Section: colSection to colLecture - 1
+        // Lecture: colLecture to maxCol1
+        if (loc.col1 >= colSection && loc.col1 < colLecture) {
+          sectionLocations.push(loc);
+        } else if (loc.col1 >= colLecture) {
+          lectureLocations.push(loc);
+        } else {
+          unknownLocations.push(loc);
+        }
+      }
+
+      // Create separate entries for section and lecture if they have locations
+      if (sectionLocations.length > 0) {
+        const key = `section::${entry.headerText}`;
+        if (!byKey.has(key)) {
+          byKey.set(key, {
+            key,
+            headerText: entry.headerText,
+            kind: "section",
+            occurrences: sectionLocations.length,
+            locations: sectionLocations,
+          });
+        } else {
+          const opt = byKey.get(key);
+          opt.occurrences += sectionLocations.length;
+          opt.locations.push(...sectionLocations);
+        }
+      }
+
+      if (lectureLocations.length > 0) {
+        const key = `lecture::${entry.headerText}`;
+        if (!byKey.has(key)) {
+          byKey.set(key, {
+            key,
+            headerText: entry.headerText,
+            kind: "lecture",
+            occurrences: lectureLocations.length,
+            locations: lectureLocations,
+          });
+        } else {
+          const opt = byKey.get(key);
+          opt.occurrences += lectureLocations.length;
+          opt.locations.push(...lectureLocations);
+        }
+      }
+
+      // Handle unknown locations (outside both ranges)
+      if (unknownLocations.length > 0) {
+        const key = `unknown::${entry.headerText}`;
+        if (!byKey.has(key)) {
+          byKey.set(key, {
+            key,
+            headerText: entry.headerText,
+            kind: "unknown",
+            occurrences: unknownLocations.length,
+            locations: unknownLocations,
+          });
+        } else {
+          const opt = byKey.get(key);
+          opt.occurrences += unknownLocations.length;
+          opt.locations.push(...unknownLocations);
+        }
       }
     }
   }
@@ -997,6 +1078,9 @@ export function processAttendance(workbook, targetIdsSet, targetWeek, attendance
       endSearch = colLecture ? colLecture - 1 : maxCol1;
     } else if (typeLower.includes("lecture")) {
       if (!colLecture) continue;
+      // Based on actual Excel structure analysis: lecture week columns (W1, W2, W3...) start
+      // at the same column where "Attendance Lecture" header is found in row 1.
+      // Section week columns end at colLecture - 1, so lecture starts at colLecture.
       startSearch = colLecture;
       endSearch = maxCol1;
     } else {
