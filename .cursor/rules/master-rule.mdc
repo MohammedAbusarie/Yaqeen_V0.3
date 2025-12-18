@@ -1,0 +1,483 @@
+---
+alwaysApply: true
+---
+
+🔒 MANDATORY PRE-ACTION PROTOCOL
+BEFORE PROCESSING ANY REQUEST—NO EXCEPTIONS:
+
+LOAD PROJECT MEMORY (required)
+
+text
+CHECK if .project/memory/manifest.md exists
+CHECK if .project/memory/design-patterns.md exists
+CHECK if .project/memory/bugs-known.md exists
+CHECK if .project/memory/architecture.md exists
+If ANY do not exist → CREATE with structured templates
+
+READ & INTERNALIZE all memory files
+Apply ALL learned patterns, constraints, and decisions
+
+VERIFY CONSISTENCY
+Cross-check request against design patterns
+Identify ANY deviation and REJECT or FLAG
+
+LOG DECISION
+Record what was approved, what was rejected, why
+
+📋 CRITICAL MEMORY FILES (Auto-Managed)
+Your AI agent MUST maintain these files at all times:
+
+.project/memory/manifest.md
+Purpose: Master index of project state
+
+text
+# Project Manifest
+
+## Active Tech Stack
+- Framework: [X]
+- Database: [X]
+- Language: [X]
+- Auth: [X]
+
+## Critical Constraints
+- [List immutable patterns]
+- [List forbidden patterns]
+- [List exceptions only approved by human review]
+
+## Last Updated
+[Timestamp]
+
+## Memory Freshness Check
+- Design Patterns: ✓ Current
+- Known Bugs: ✓ Current
+- Architecture: ✓ Current
+.project/memory/design-patterns.md
+Purpose: Immutable coding patterns and style guide
+
+text
+# Design Patterns & Coding Standards
+
+## Layer 1: Architecture Pattern
+[e.g., MVC, Clean Architecture, Domain-Driven Design]
+- Core principle: [Statement]
+- File organization: [Rules]
+- Import structure: [Rules]
+
+## Layer 2: Code Style
+- Naming: [camelCase/PascalCase rules]
+- Variable declarations: [const/let rules]
+- Function structure: [sync/async patterns]
+- Error handling: [try/catch, error types]
+
+## Layer 3: Component/Module Patterns
+[Framework-specific: React hooks, Django views, etc.]
+- Pattern: [Description]
+- When to use: [Conditions]
+- Example file: [Path to reference]
+
+## Layer 4: Data Flow
+- State management: [Tool + pattern]
+- API calls: [Service layer pattern]
+- Data validation: [Schema + approach]
+
+## FORBIDDEN PATTERNS (ZERO TOLERANCE)
+- Pattern X: Why forbidden
+- Pattern Y: Why forbidden
+- Pattern Z: Why forbidden
+
+## Last Approved By
+[Human name] | [Date]
+.project/memory/bugs-known.md
+Purpose: Known issues, their causes, and fixes
+
+text
+# Known Bugs & Solutions
+
+## Active Bugs
+| Bug ID | Description | Root Cause | Solution Applied | Status |
+|--------|-------------|-----------|------------------|--------|
+| BUG-001 | [Description] | [Root cause] | [Fix applied] | Open/Closed |
+
+## Fixed Bugs (Do Not Repeat)
+| Bug ID | What Failed | Why It Failed | How We Fixed It | Prevention |
+|--------|------------|---------------|-----------------|-----------|
+| BUG-FIXED-001 | [Pattern X] | [Root cause] | [Solution] | [How to prevent] |
+
+## Performance Issues Tracked
+- Issue: [Description]
+- Metric: [Baseline vs target]
+- Fix: [Applied solution]
+
+## Last Updated
+[Timestamp]
+.project/memory/architecture.md
+Purpose: System design and module dependencies
+
+text
+# System Architecture
+
+## Module Map
+├── [Module A]
+│ ├── Purpose: [X]
+│ ├── Responsibilities: [List]
+│ ├── Dependencies: [List]
+│ └── Entry point: [File]
+├── [Module B]
+│ └── ...
+
+text
+
+## Data Models
+- [Model name]: [Fields and types]
+- [Relationships]: [How models connect]
+
+## API Contract
+- Endpoints: [List with methods]
+- Rate limits: [If applicable]
+- Authentication: [Method]
+
+## Deployment & Environment
+- Staging: [Configuration]
+- Production: [Configuration]
+- Environment variables: [Critical ones]
+
+## Scalability & Limits
+- User capacity: [Current/Target]
+- Request rate: [Max RPS]
+- Data limits: [Storage/memory]
+
+## Last Updated
+[Timestamp] | Approved by [Human]
+.project/memory/features-roadmap.md
+Purpose: Approved features and development priorities
+
+text
+# Features & Roadmap
+
+## Current Development
+- Feature: [Name]
+- Status: In Progress
+- Owner: [Human name]
+- Target completion: [Date]
+
+## Approved Next
+- Feature: [Name]
+- Priority: P1/P2/P3
+- Estimated scope: [Days/weeks]
+- Blocked by: [None/Other feature]
+
+## Rejected / On Hold
+- Feature: [Name]
+- Reason: [Why rejected]
+- Revisit date: [If applicable]
+
+## Last Reviewed
+[Date] by [Human]
+🚫 ABSOLUTE RULES (NON-NEGOTIABLE)
+Rule 1: Pattern Adherence
+You SHALL NOT deviate from design patterns.
+
+Every new file MUST follow existing architecture
+
+Every function MUST match the established pattern
+
+Every import MUST use the defined structure
+
+If request requires deviation → REQUIRE HUMAN APPROVAL and log reason
+
+Rule 2: Memory Preservation
+You MUST maintain memory files.
+
+After EVERY feature completion → update .project/memory/architecture.md
+
+After EVERY bug fix → update .project/memory/bugs-known.md
+
+After EVERY pattern violation encountered → update .project/memory/design-patterns.md with exception note
+
+Before EVERY implementation → verify manifest matches current state
+
+Rule 3: Zero Silent Failures
+You MUST flag inconsistencies immediately.
+
+If code exists that violates design patterns → Report with file/line
+
+If memory file is outdated → Update immediately
+
+If request conflicts with patterns → Show conflict with reference to pattern file
+
+If patterns are ambiguous → REQUEST CLARIFICATION from human before proceeding
+
+Rule 4: Immutable Core
+These aspects are LOCKED:
+
+Architecture layer (fundamental structure)
+
+Core naming conventions
+
+Primary frameworks/libraries (unless human approves change)
+
+Authentication/security patterns
+
+These aspects are FLEXIBLE:
+
+Implementation details (as long as pattern is respected)
+
+Variable names (as long as convention is respected)
+
+Utilities and helpers (as long as not core modules)
+
+🔄 DECISION WORKFLOW
+When a Request Arrives:
+text
+1. LOAD: Read all memory files (30 seconds)
+2. PARSE: Identify request scope
+3. CHECK: Does it align with design patterns?
+   ├─ YES → Continue to step 4
+   └─ NO  → Flag violation, ask for approval
+4. VERIFY: Does it conflict with known bugs?
+   ├─ NO conflicts → Continue to step 5
+   └─ CONFLICTS → Apply known fix, document
+5. IMPLEMENT: Generate code following patterns
+6. VALIDATE: Self-check code against patterns
+7. LOG: Update memory files
+8. REPORT: Show what changed and why
+If Conflict Detected:
+text
+STOP AND REPORT:
+├─ Violation Type: [Pattern/Memory/Dependency]
+├─ Reference: [Link to pattern/bug doc]
+├─ Current State: [What memory says]
+├─ Request State: [What request asks]
+├─ Recommendation: [APPROVE/REJECT/MODIFY]
+└─ Awaiting: [Human decision]
+
+Options for Human:
+A) "Proceed as planned" → Update memory with approved exception
+B) "Modify to fit pattern" → Rewrite request to align
+C) "Update pattern" → Change design pattern (logged as architecture decision)
+📝 IMPLEMENTATION CHECKLIST
+For every code generation task, output this checklist:
+
+text
+## Code Generation Compliance Check
+
+- [ ] Memory files loaded and current (timestamp: ____)
+- [ ] Design pattern verified (pattern: ____)
+- [ ] No conflicts with known bugs (reference: ____ or None)
+- [ ] File follows architecture rules (location: ____)
+- [ ] Naming conventions applied (style: ____)
+- [ ] No forbidden patterns used
+- [ ] Error handling implemented (type: ____)
+- [ ] Memory files updated (files changed: ____)
+
+## Changes Summary
+- Files created: [ ]
+- Files modified: [ ]
+- Memory files updated: [ ]
+- Bugs addressed: [ ]
+
+## Pattern Violations Detected
+[ ] None
+[ ] Yes - Listed below:
+  - Violation: [Description] | Severity: [High/Medium/Low] | Approval: [Pending/Approved]
+🎯 HOW TO CUSTOMIZE THIS RULE
+Replace placeholders in memory templates with your actual tech stack
+
+Define your design patterns in .project/memory/design-patterns.md
+
+Document known bugs as you encounter them
+
+Create reference files for each major module
+
+Set the rule to "Always" so it triggers on every request
+
+📌 QUICK START
+Setup (Do Once)
+bash
+mkdir -p .project/memory
+Create four files:
+
+.project/memory/manifest.md
+
+.project/memory/design-patterns.md
+
+.project/memory/bugs-known.md
+
+.project/memory/architecture.md
+
+Fill each with your project's actual patterns and architecture.
+
+In Cursor Settings
+Go to Settings > General > Project Rules
+
+Add new rule: Copy this entire text
+
+Set Trigger: Always
+
+Set Apply to: All files
+
+Description: "Immutable Design Pattern Enforcement & Project Memory"
+
+✅ VALIDATION RULES
+Every time the AI generates code, it MUST verify:
+
+python
+def validate_against_patterns():
+    """Pseudo-code for validation logic"""
+    checks = [
+        matches_file_structure(),      # Right folder, right naming
+        follows_naming_convention(),   # camelCase/PascalCase correct
+        uses_allowed_libraries(),      # No forbidden imports
+        respects_layer_architecture(), # No cross-layer violations
+        handles_errors_correctly(),    # Error handling present
+        no_known_bugs_patterns(),      # No repeated mistakes
+        memory_files_updated(),        # Changes logged
+    ]
+    
+    for check in checks:
+        if not check:
+            STOP_AND_REPORT(violated_check)
+    
+    return True  # Only if ALL pass
+🔍 MONITORING & UPDATES
+Weekly Review (Human Does This):
+
+ Check for pattern violations logged
+
+ Review memory file freshness timestamps
+
+ Approve or reject proposed pattern exceptions
+
+ Update architecture.md if modules changed
+
+ Verify no silent bugs were introduced
+
+Per-Request (AI Does This):
+
+ Load memory files
+
+ Check against patterns
+
+ Flag violations
+
+ Update memory after implementation
+
+ Output compliance checklist
+
+🚨 EMERGENCY OVERRIDE (Rare)
+If human explicitly says: "Override pattern: [specific pattern name] for this request only"
+
+Then:
+
+Proceed with override
+
+Log in .project/memory/design-patterns.md under "Approved Exceptions" with:
+
+Date
+
+What was overridden
+
+Why (human's reason)
+
+Human's name
+
+Expiry date (if temporary)
+
+Flag in next implementation that override is active
+
+Require human to confirm continued override or revert after testing
+
+📞 SUPPORT PATTERNS
+Pattern Unclear?
+Ask: "I found ambiguity in the pattern for [X]. Should I:
+A) Follow Option 1: [Description]
+B) Follow Option 2: [Description]
+Show me an example file to reference?"
+
+New Feature Doesn't Fit Pattern?
+Ask: "The requested feature [X] doesn't fit the current pattern. Should I:
+A) Modify the feature to fit the pattern
+B) Extend the pattern to accommodate it
+C) Create an exception (logged)?
+Reference: [Pattern file link]"
+
+Bug Uncertainty?
+Ask: "I detected pattern [X] that caused bug [Y] before. Should I:
+A) Apply the known fix
+B) Proceed and monitor
+Reference: [Bug documentation link]"
+
+🎖️ EXCELLENCE CRITERIA
+This rule succeeds when:
+✅ Zero untracked design pattern violations
+✅ Every feature implementation updates memory
+✅ Bugs documented before reaching production
+✅ New developers understand project in < 1 hour by reading memory files
+✅ No "Why was this coded this way?" questions—it's all documented
+✅ Consistency score: 100% within defined patterns
+✅ Development velocity increases (less context-switching)
+✅ Onboarding time for new devs drops by 80%
+
+📚 REFERENCE DOCUMENTS
+Keep these in your project:
+
+text
+.project/
+├── memory/
+│   ├── manifest.md              # Master index
+│   ├── design-patterns.md       # Coding standards (IMMUTABLE)
+│   ├── bugs-known.md            # Known issues & fixes
+│   ├── architecture.md          # System design
+│   └── features-roadmap.md      # What's planned
+├── docs/
+│   ├── SETUP.md                 # How to run this project
+│   ├── API.md                   # API documentation
+│   └── DEPLOYMENT.md            # How to deploy
+└── examples/
+    ├── good-example.ts          # Reference implementation
+    ├── pattern-module.ts        # Example module structure
+    └── error-handling.ts        # Error pattern example
+⚡ ADVANCED: Integration with CI/CD
+text
+# In your CI/CD pipeline (.github/workflows/pattern-check.yml)
+name: Design Pattern Enforcement
+
+on: [pull_request]
+
+jobs:
+  pattern-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check Memory Files
+        run: |
+          test -f .project/memory/manifest.md
+          test -f .project/memory/design-patterns.md
+          test -f .project/memory/bugs-known.md
+      - name: Verify Naming Conventions
+        run: npm run lint:patterns
+      - name: Update Memory After Merge
+        run: npm run memory:update
+🏁 FINAL NOTES
+This rule is designed to:
+
+Prevent chaos - One source of truth for patterns
+
+Protect knowledge - Memory persists across sessions
+
+Enforce consistency - Every AI action checked against baseline
+
+Enable confidence - You know exactly what you'll get
+
+Scale team coordination - New developers learn from memory files
+
+Update this rule whenever:
+
+Major architectural decision changes
+
+New project phase begins
+
+Pattern consensus shifts
+
+Memory files grow stale
+

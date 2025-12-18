@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Modern attendance tracking tool - client-side processing, no server required" />
+    <title>Yaqeen Attendance Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="appHeader">
+      <div class="appHeader__title">
+        <h1>Yaqeen Attendance Tool</h1>
+        <p>Automated attendance & grades input • Time-saving • Privacy-first</p>
+        <p style="margin-top: 4px; font-size: 13px; color: var(--text-muted);">Created by Mohammed Abusarie</p>
+      </div>
+      
+      <nav class="appNav">
+        <button id="navInputs" class="appNav__btn is-active" type="button">Inputs</button>
+        <button id="navReport" class="appNav__btn" type="button">Report</button>
+        <button id="navAbout" class="appNav__btn" type="button">About</button>
+      </nav>
+    </header>
+
+    <main class="appMain">
+      <!-- Inputs View -->
+      <section id="viewInputs" class="view view--active">
+        <div class="card">
+          <h2>Edit Workbook (Attendance / Grades)</h2>
+
+          <!-- Wizard Steps Indicator -->
+          <div class="wizard">
+            <div class="wizard__steps">
+              <div class="wizard__step" data-step="1">
+                <div class="wizard__step-number">1</div>
+                <div class="wizard__step-label">Load File</div>
+              </div>
+              <div class="wizard__step" data-step="2">
+                <div class="wizard__step-number">2</div>
+                <div class="wizard__step-label">Configure</div>
+              </div>
+              <div class="wizard__step" data-step="3">
+                <div class="wizard__step-number">3</div>
+                <div class="wizard__step-label">Input Data</div>
+              </div>
+              <div class="wizard__step" data-step="4">
+                <div class="wizard__step-number">4</div>
+                <div class="wizard__step-label">Generate Preview</div>
+              </div>
+            </div>
+
+            <!-- Step 1: Load File -->
+            <div class="wizard__panel" data-panel="1">
+              <h3 class="wizard__panel-title">Step 1: Load File</h3>
+              <div class="grid2">
+                <div class="field">
+                  <label for="editorSheetUrl">Google Sheet or SharePoint URL (optional)</label>
+                  <input
+                    id="editorSheetUrl"
+                    type="url"
+                    placeholder="https://docs.google.com/spreadsheets/d/.../edit or https://...sharepoint.com/..."
+                    autocomplete="off"
+                  />
+                  <div class="hint">
+                    We'll try to download as <code>.xlsx</code>. Supports Google Sheets and SharePoint. If blocked by CORS, export manually and upload below.
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="editorXlsxFile">Upload attendance sheet (<code>.xlsx</code>, <code>.ods</code>, or <code>.csv</code>)</label>
+                  <input id="editorXlsxFile" type="file" accept=".xlsx,.ods,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.oasis.opendocument.spreadsheet,text/csv" />
+                  <div class="hint">Recommended. Works even when URL downloads are blocked. Supports Excel (.xlsx), OpenDocument (.ods), and CSV formats.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Configure -->
+            <div class="wizard__panel" data-panel="2" hidden>
+              <h3 class="wizard__panel-title">Step 2: Configure</h3>
+              <div class="grid3">
+                <div class="field">
+                  <label for="editorScope">Mode</label>
+                  <select id="editorScope">
+                    <option value="single">Single-sheet mode</option>
+                    <option value="multi">Multi-sheet mode</option>
+                  </select>
+                  <div class="hint">Choose whether the selected column applies to one sheet or all sheets.</div>
+                </div>
+
+                <div class="field">
+                  <label for="editorSheet">Sheet (single mode)</label>
+                  <select id="editorSheet" disabled>
+                    <option value="">(Load file first)</option>
+                  </select>
+                  <div class="hint">Enabled only in single-sheet mode.</div>
+                </div>
+
+                <div class="field">
+                  <label for="editorColumn">Target column header</label>
+                  <select id="editorColumn" disabled>
+                    <option value="">(Select mode + load file)</option>
+                  </select>
+                  <div class="hint">Headers are read from rows 2–5. Options are tagged as Lecture/Section when detected. The search below also includes row 1.</div>
+                </div>
+              </div>
+              
+              <div class="field" style="margin-top: 16px;">
+                <label for="editorColumnSearch">Search column header</label>
+                <input id="editorColumnSearch" type="text" autocomplete="off" placeholder="Type to search for a column header…" disabled />
+                <div class="hint">Search for a column header if you can't find it in the dropdown above.</div>
+                <div id="editorColumnSearchResults" class="columnSearchResults" style="display: none;"></div>
+              </div>
+            </div>
+
+            <!-- Step 3: Input Data -->
+            <div class="wizard__panel" data-panel="3" hidden>
+              <h3 class="wizard__panel-title">Step 3: Input Data</h3>
+              <div class="grid2">
+                <div class="field">
+                  <label for="editorTask">Task type</label>
+                  <select id="editorTask">
+                    <option value="attendance">Attendance input (write 1)</option>
+                    <option value="grade">Grade input (write grade)</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="editorInputTxt">Input file (<code>.txt</code>)</label>
+                  <input id="editorInputTxt" type="file" accept=".txt,text/plain" />
+                  <div class="hint">
+                    Attendance: list of IDs (same delimiters as attendance).<br>
+                    Grades: <code>id,grade</code> per line.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4: Generate Preview -->
+            <div class="wizard__panel" data-panel="4" hidden>
+              <h3 class="wizard__panel-title">Step 4: Generate Preview</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Review your configuration and generate the preview. You'll be taken to the Reports view to review the results.
+              </p>
+              <div class="wizard__summary">
+                <div class="wizard__summary-item">
+                  <strong>File:</strong> <span id="wizardSummaryFile">Not loaded</span>
+                </div>
+                <div class="wizard__summary-item">
+                  <strong>Mode:</strong> <span id="wizardSummaryMode">-</span>
+                </div>
+                <div class="wizard__summary-item">
+                  <strong>Sheet:</strong> <span id="wizardSummarySheet">-</span>
+                </div>
+                <div class="wizard__summary-item">
+                  <strong>Column:</strong> <span id="wizardSummaryColumn">-</span>
+                </div>
+                <div class="wizard__summary-item">
+                  <strong>Task:</strong> <span id="wizardSummaryTask">-</span>
+                </div>
+                <div class="wizard__summary-item">
+                  <strong>Input File:</strong> <span id="wizardSummaryInput">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Wizard Navigation -->
+            <div class="wizard__navigation">
+              <button id="btnWizardPrev" class="btn btn--ghost" type="button" disabled>Previous</button>
+              <button id="btnWizardNext" class="btn btn--primary" type="button">Next</button>
+              <button id="btnWizardFinish" class="btn btn--primary" type="button" hidden disabled>
+                <span class="btn__text">Generate Preview</span>
+              </button>
+            </div>
+
+            <div id="editorStatus" class="status" style="margin-top: 20px;" aria-live="polite"></div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Report View -->
+      <section id="viewReport" class="view">
+        <div class="card card--report">
+          <div class="cardHeader">
+            <h2>Edit Preview & Report</h2>
+            <div class="cardHeader__actions">
+              <div class="field field--inline" style="margin-right: 12px;">
+                <label for="highlightCheckbox" class="labelInline">
+                  <input id="highlightCheckbox" type="checkbox" checked style="margin-right: 6px;" />
+                  Highlight modified cells
+                </label>
+                <input id="highlightColorPicker" type="color" value="#FFFF00" title="Select highlight color" style="margin-left: 8px; height: 32px; width: 50px; cursor: pointer;" />
+              </div>
+              <button id="btnEditorDownload" class="btn" type="button" disabled>Download Modified File</button>
+              <button id="btnDownloadJson" class="btn" type="button" disabled>Download JSON</button>
+              <button id="btnDownloadTxt" class="btn" type="button" disabled>Download TXT</button>
+              <button id="btnDownloadPdf" class="btn" type="button" disabled>Download PDF</button>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <div class="segmented" role="tablist" aria-label="Preview mode">
+              <button id="editorPreviewModeGrouped" class="segmented__btn is-active" type="button" role="tab" aria-selected="true">
+                Grouped by sheet
+              </button>
+              <button id="editorPreviewModeOrdered" class="segmented__btn" type="button" role="tab" aria-selected="false">
+                Input order
+              </button>
+            </div>
+
+            <div class="field field--inline">
+              <label for="loadReportJson" class="labelInline">Load previous report JSON</label>
+              <input id="loadReportJson" type="file" accept=".json,application/json" />
+            </div>
+
+            <div class="field field--inline viewerHeader__filter">
+              <label for="editorPreviewSheetFilter" class="labelInline">Sheet</label>
+              <select id="editorPreviewSheetFilter" disabled>
+                <option value="">All Sheets</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="summaryRow">
+            <div id="summary" class="summary">No preview generated. Go to Inputs tab to configure and generate preview.</div>
+          </div>
+
+          <div class="viewer">
+            <section class="viewer__main">
+              <div class="tableWrap">
+                <table class="table" aria-label="Editor preview table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Sheet</th>
+                      <th>Cell</th>
+                      <th>Old</th>
+                      <th>New</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="editorPreviewTableBody"></tbody>
+                </table>
+              </div>
+
+              <div id="delimiterFilterContainer" class="delimiterFilter" style="display: none;">
+                <div class="field field--inline">
+                  <label for="editorDelimiterFilter" class="labelInline">Filter by delimiter</label>
+                  <select id="editorDelimiterFilter">
+                    <option value="">Show All</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="missing">
+                <div class="viewerTitle">Final column mapping report</div>
+                <textarea id="editorFinalReportBox" readonly rows="4">(Generate preview first)</textarea>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- About View -->
+      <section id="viewAbout" class="view">
+        <div class="card">
+          <div class="aboutHeader">
+            <h2>About</h2>
+          </div>
+          
+          <div class="aboutContent">
+            <div class="aboutSection">
+              <p class="aboutText">
+                Hi, I'm <b>Mohammed Abusarie</b>. I built this tool to help my fellow Teaching Assistants at the Egyptian Chinese University with the tedious tasks of attendance and grades input. I believe automation is the key to solving many problems and performing countless tiring tasks in our daily lives. Time is precious, and we deserve to spend it on what truly matters—studying, connecting, and yes, enjoying that cup of tea.
+              </p>
+              <p class="aboutText__arabic">
+                مرحباً، أنا <b>محمد أبوسريع</b>. صممت هذه الأداة لمساعدة زملائي مساعدي التدريس في الجامعة المصرية الصينية في المهام المرهقة لإدخال الحضور والدرجات. أؤمن بأن الأتمتة هي المفتاح لحل العديد من المشاكل وأداء الكثير من المهام المرهقة في حياتنا اليومية. الوقت ثمين، ونستحق أن نقضيه في الأمور التي تهم حقاً—الدراسة والتواصل، وبالطبع الاستمتاع بكوب الشاي.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+          <div class="aboutHeader">
+            <h2>Beta Launch - December 18, 2025</h2>
+          </div>
+          
+          <div class="aboutContent">
+            <div class="aboutSection">
+              <p class="aboutText">
+                This is a <b>beta version</b> of the tool and marks its <b>first launch</b>. As we embark on this journey together, your feedback is invaluable. Please report any bugs you encounter or share features you'd like to see in future versions. Together, we can make this tool stronger and more efficient for everyone.
+              </p>
+              <p class="aboutText" style="margin-top: 12px;">
+                <b>Contact:</b> <a href="mailto:mohammed.abusarie@ecu.edu.eg">mohammed.abusarie@ecu.edu.eg</a>
+              </p>
+              <p class="aboutText__arabic">
+                هذه <b>نسخة تجريبية</b> من الأداة وهي <b>الإطلاق الأول</b>. بينما نبدأ هذه الرحلة معاً، ملاحظاتك لا تقدر بثمن. يرجى الإبلاغ عن أي أخطاء تواجهها أو مشاركة الميزات التي ترغب في رؤيتها في الإصدارات القادمة. معاً، يمكننا جعل هذه الأداة أقوى وأكثر كفاءة للجميع.
+              </p>
+              <p class="aboutText__arabic" style="margin-top: 12px;">
+                <b>للتواصل:</b> <a href="mailto:mohammed.abusarie@ecu.edu.eg">mohammed.abusarie@ecu.edu.eg</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Dialogs (accessible from all views) -->
+    <dialog id="editorFixDialog" class="modal">
+      <form method="dialog" class="modal__content">
+        <div class="modal__header">
+          <div class="modal__title">Fix student match</div>
+          <button class="btn btn--ghost" value="cancel" type="submit">Close</button>
+        </div>
+
+        <div class="field" style="margin-top: 12px;">
+          <label for="editorFixSearch">Search by ID or name</label>
+          <input id="editorFixSearch" type="text" autocomplete="off" placeholder="Type to search…" />
+          <div class="hint">Results update as you type. Click a result to apply the fix.</div>
+        </div>
+
+        <div id="editorFixResults" class="searchResults" aria-label="Search results"></div>
+      </form>
+    </dialog>
+
+    <dialog id="editorGradeDialog" class="modal">
+      <form method="dialog" class="modal__content">
+        <div class="modal__header">
+          <div class="modal__title">Edit grade</div>
+          <button class="btn btn--ghost" value="cancel" type="submit">Close</button>
+        </div>
+
+        <div class="field" style="margin-top: 12px;">
+          <label for="editorGradeValue">New grade</label>
+          <input id="editorGradeValue" type="text" autocomplete="off" placeholder="e.g. 15" />
+          <div class="hint">This only changes the preview. The workbook is modified only after download confirmation.</div>
+        </div>
+
+        <div class="actions" style="margin-top: 14px;">
+          <button id="editorGradeSave" class="btn btn--primary" value="ok" type="submit">Save</button>
+          <button class="btn btn--ghost" value="cancel" type="submit">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+
+    <footer class="footer">
+      <p>
+        <b>Tip:</b> If URL download fails, download the file manually: <b>Google Sheets</b> → <b>File → Download → Microsoft Excel (.xlsx)</b>, or <b>SharePoint</b> → <b>Download</b> (choose .xlsx, .ods, or .csv), then upload it above.
+      </p>
+      <p style="margin-top: 8px; opacity: 0.8;">
+        © <span id="footerYear"></span> Mohammed Abusarie
+      </p>
+    </footer>
+
+    <!-- SheetJS with styling support (XLSX parser) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <!-- jsPDF + AutoTable for PDF export -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
+
+
