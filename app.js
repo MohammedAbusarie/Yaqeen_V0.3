@@ -8,9 +8,11 @@ const els = {
   // Navigation
   navInputs: domGet("navInputs"),
   navReport: domGet("navReport"),
+  navOcr: domGet("navOcr"),
   navAbout: domGet("navAbout"),
   viewInputs: domGet("viewInputs"),
   viewReport: domGet("viewReport"),
+  viewOcr: domGet("viewOcr"),
   viewAbout: domGet("viewAbout"),
   
   // Editor (generic column edit)
@@ -64,6 +66,22 @@ const els = {
   btnDownloadTxt: domGet("btnDownloadTxt"),
   btnDownloadPdf: domGet("btnDownloadPdf"),
   loadReportJson: domGet("loadReportJson"),
+
+  // OCR
+  ocrImageUpload: domGet("ocrImageUpload"),
+  ocrImagePreview: domGet("ocrImagePreview"),
+  btnOcrProcess: domGet("btnOcrProcess"),
+  ocrProgressFill: domGet("ocrProgressFill"),
+  ocrProgressText: domGet("ocrProgressText"),
+  ocrProcessingLog: domGet("ocrProcessingLog"),
+  ocrTotalIds: domGet("ocrTotalIds"),
+  ocrConfidentIds: domGet("ocrConfidentIds"),
+  ocrUncertainIds: domGet("ocrUncertainIds"),
+  ocrConfidentList: domGet("ocrConfidentList"),
+  ocrUncertainList: domGet("ocrUncertainList"),
+  btnOcrApprove: domGet("btnOcrApprove"),
+  btnOcrReset: domGet("btnOcrReset"),
+  ocrStatus: domGet("ocrStatus"),
 };
 
 const state = createInitialState();
@@ -104,6 +122,11 @@ if (els.navReport) {
   els.navReport.addEventListener("click", () => switchView('report'));
 } else {
   console.error("navReport element not found");
+}
+if (els.navOcr) {
+  els.navOcr.addEventListener("click", () => switchView('ocr'));
+} else {
+  console.error("navOcr element not found");
 }
 if (els.navAbout) {
   els.navAbout.addEventListener("click", () => switchView('about'));
@@ -167,6 +190,12 @@ els.editorDelimiterFilter?.addEventListener("change", handlers.handleDelimiterFi
 els.btnWizardPrev?.addEventListener("click", handlers.handleWizardPrev);
 els.btnWizardNext?.addEventListener("click", handlers.handleWizardNext);
 els.btnWizardFinish?.addEventListener("click", handlers.handleWizardFinish);
+
+// OCR wiring
+els.ocrImageUpload?.addEventListener("change", handlers.handleOcrImageUpload);
+els.btnOcrProcess?.addEventListener("click", handlers.handleOcrProcess);
+els.btnOcrApprove?.addEventListener("click", handlers.handleOcrApprove);
+els.btnOcrReset?.addEventListener("click", handlers.handleOcrReset);
 
 // Initial state
 switchView('inputs');

@@ -28,6 +28,7 @@
       <nav class="appNav">
         <button id="navInputs" class="appNav__btn is-active" type="button">Inputs</button>
         <button id="navReport" class="appNav__btn" type="button">Report</button>
+        <button id="navOcr" class="appNav__btn" type="button">OCR (Experimental)</button>
         <button id="navAbout" class="appNav__btn" type="button">About</button>
       </nav>
     </header>
@@ -186,6 +187,91 @@
           </div>
         </div>
 
+      </section>
+
+      <!-- OCR Experimental Feature -->
+      <section id="viewOcr" class="view" style="display: none;">
+        <div class="card">
+          <div class="cardHeader">
+            <h2>📸 Experimental: OCR Attendance Parser</h2>
+            <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">
+              Upload attendance sheet images and automatically extract student IDs using OCR. Review and fix uncertain results before generating the text file.
+            </p>
+          </div>
+
+          <div class="ocrWorkflow">
+            <!-- Step 1: Upload Images -->
+            <div class="ocrStep" data-ocr-step="1">
+              <h3 class="ocrStep__title">Step 1: Upload Attendance Images</h3>
+              <div class="field">
+                <label for="ocrImageUpload">Select attendance sheet images</label>
+                <input 
+                  id="ocrImageUpload" 
+                  type="file" 
+                  accept="image/*" 
+                  multiple 
+                />
+                <div class="hint">
+                  Upload one or more images of attendance sheets. Supports JPG, PNG, and other common image formats.
+                </div>
+              </div>
+              <div id="ocrImagePreview" class="ocrImagePreview"></div>
+              <button id="btnOcrProcess" class="btn btn--primary" type="button" disabled>
+                Process Images with OCR
+              </button>
+            </div>
+
+            <!-- Step 2: Processing -->
+            <div class="ocrStep" data-ocr-step="2" style="display: none;">
+              <h3 class="ocrStep__title">Step 2: Processing Images</h3>
+              <div id="ocrProgress" class="ocrProgress">
+                <div class="ocrProgress__bar">
+                  <div id="ocrProgressFill" class="ocrProgress__fill"></div>
+                </div>
+                <div id="ocrProgressText" class="ocrProgress__text">Initializing OCR engine...</div>
+              </div>
+              <div id="ocrProcessingLog" class="ocrProcessingLog"></div>
+            </div>
+
+            <!-- Step 3: Review Results -->
+            <div class="ocrStep" data-ocr-step="3" style="display: none;">
+              <h3 class="ocrStep__title">Step 3: Review & Fix Extracted IDs</h3>
+              <div class="ocrSummary">
+                <div class="ocrSummary__item">
+                  <strong>Total IDs Found:</strong> <span id="ocrTotalIds">0</span>
+                </div>
+                <div class="ocrSummary__item ocrSummary__item--success">
+                  <strong>Confident Matches:</strong> <span id="ocrConfidentIds">0</span>
+                </div>
+                <div class="ocrSummary__item ocrSummary__item--warning">
+                  <strong>Needs Review:</strong> <span id="ocrUncertainIds">0</span>
+                </div>
+              </div>
+
+              <div class="ocrResults">
+                <div class="ocrResults__section">
+                  <h4>✅ Confident Matches</h4>
+                  <div id="ocrConfidentList" class="ocrIdList"></div>
+                </div>
+                <div class="ocrResults__section">
+                  <h4>⚠️ Needs Review</h4>
+                  <div id="ocrUncertainList" class="ocrIdList"></div>
+                </div>
+              </div>
+
+              <div class="ocrActions">
+                <button id="btnOcrApprove" class="btn btn--primary" type="button">
+                  Approve & Generate Text File
+                </button>
+                <button id="btnOcrReset" class="btn btn--ghost" type="button">
+                  Start Over
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="ocrStatus" class="status" style="margin-top: 20px;" aria-live="polite"></div>
+        </div>
       </section>
 
       <!-- Report View -->
@@ -409,6 +495,10 @@
     <!-- jsPDF + AutoTable for PDF export -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- OpenCV.js for table detection -->
+    <script async src="https://docs.opencv.org/4.10.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

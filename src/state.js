@@ -44,6 +44,13 @@ export function createInitialState() {
       // wizard
       wizardStep: 1, // 1-4
     },
+    ocr: {
+      // OCR experimental feature state
+      uploadedImages: [],
+      processingResults: null,
+      approvedIds: [],
+      currentStep: 1, // 1: upload, 2: processing, 3: review
+    },
   };
 }
 
