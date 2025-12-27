@@ -278,8 +278,69 @@ export async function fetchXlsxFromGoogleSheetUrl(url) {
 
 export function readWorkbookFromArrayBuffer(arrayBuffer) {
   assertXlsxLoaded();
-  const wb = window.XLSX.read(arrayBuffer, { type: "array", cellDates: false });
-  return wb;
+  
+  // Try reading with standard options first
+  try {
+    const wb = window.XLSX.read(arrayBuffer, {
+      type: "array",
+      cellDates: false,
+      defval: "", // Default value for empty cells
+    });
+    return wb;
+  } catch (error) {
+    const errorMsg = error?.message || String(error);
+    
+    // If we get an "Unsupported value type" error, try with raw mode
+    if (errorMsg.includes("Unsupported value type") || errorMsg.includes("unsupported")) {
+      try {
+        // Try reading with raw mode enabled - this can help with ODS files
+        const wb = window.XLSX.read(arrayBuffer, {
+          type: "array",
+          cellDates: false,
+          defval: "",
+          raw: true, // Use raw values to avoid type conversion issues
+        });
+        
+        // Convert raw values to strings where needed (only process existing cells)
+        for (const sheetName of wb.SheetNames) {
+          const ws = wb.Sheets[sheetName];
+          if (!ws) continue;
+          
+          // Only process cells that actually exist (non-empty cells)
+          for (const cellAddress in ws) {
+            // Skip special properties that start with !
+            if (cellAddress.startsWith("!")) continue;
+            
+            const cell = ws[cellAddress];
+            if (!cell) continue;
+            
+            // Ensure cell has a valid value
+            if (cell.v === undefined || cell.v === null) {
+              cell.v = "";
+              cell.t = "s";
+            } else if (typeof cell.v !== "string" && typeof cell.v !== "number" && typeof cell.v !== "boolean") {
+              // Convert unexpected types to string
+              cell.v = String(cell.v);
+              cell.t = "s";
+            }
+          }
+        }
+        
+        return wb;
+      } catch (retryError) {
+        // If retry also fails, provide helpful error message
+        throw new FileError(
+          "The ODS file contains data types that cannot be processed. " +
+          "This often happens with formulas or special cell formats. " +
+          "Please try: (1) Opening the file in LibreOffice Calc and saving as .xlsx format, " +
+          "or (2) Exporting to CSV format, or (3) Removing any formulas and replacing them with their calculated values."
+        );
+      }
+    }
+    
+    // For other errors, provide generic error message
+    throw new FileError(`Failed to read the spreadsheet file: ${errorMsg}`);
+  }
 }
 
 // -----------------------------
@@ -296,7 +357,18 @@ function cellValue(ws, r1, c1) {
   const addr = window.XLSX.utils.encode_cell({ r: r1 - 1, c: c1 - 1 });
   const cell = ws[addr];
   if (!cell) return null;
-  return cell.v;
+  
+  // Handle edge cases from ODS files or unusual cell types
+  const v = cell.v;
+  if (v === undefined || v === null) return null;
+  
+  // Ensure we return a valid primitive type
+  if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+    return v;
+  }
+  
+  // For unexpected types, convert to string
+  return String(v);
 }
 
 function findColByTextInRow(ws, rowIdx1, textLower) {
@@ -412,20 +484,104 @@ function detectIdAndNameColumns(ws, targetIdsSet = null, startRow1 = 2, maxRowsT
     }
   }
   
-  // 2. Detect ID column (scan all columns if targetIdsSet is provided)
+  // 2. Detect ID column (scan all columns)
   let idCol = null;
+  /** @type {Map<number, number>} */ // column -> match count
+  const idColumnScores = new Map();
+  
+  // Helper to check if a value looks like an ID (numeric or email with numeric username)
+  function looksLikeId(value) {
+    if (value === null || value === undefined) return false;
+    const normalized = normalizeId(value);
+    if (!normalized) return false;
+    
+    // Check for email format with numeric username
+    if (normalized.includes("@")) {
+      const username = normalized.split("@")[0];
+      if (/^\d+$/.test(username) && username.length > 5) {
+        return true;
+      }
+    }
+    
+    // Check for pure numeric ID
+    if (/^\d+$/.test(normalized) && normalized.length > 5) {
+      return true;
+    }
+    
+    return false;
+  }
   
   if (targetIdsSet && targetIdsSet.size > 0) {
+    // With target IDs: scan all columns and count matches
     for (let c = 1; c <= maxCol1; c++) {
-      // Check if this column has at least one match
+      // Skip columns that are already identified as name columns
+      if (c === nameCol || c === nameCol2) continue;
+      
+      let matchCount = 0;
+      let totalRows = 0;
+      
       for (let r = startRow1; r <= maxRow1; r++) {
         const value = cellValue(ws, r, c);
+        totalRows++;
         if (extractId(value, targetIdsSet)) {
-          idCol = c;
-          break;
+          matchCount++;
         }
       }
-      if (idCol !== null) break; // Found first match, stop scanning
+      
+      // Consider it an ID column if it has at least one match
+      // Prefer columns with higher match rates
+      if (matchCount > 0) {
+        idColumnScores.set(c, matchCount);
+      }
+    }
+    
+    // Select the column with the most matches
+    if (idColumnScores.size > 0) {
+      let bestCol = null;
+      let bestScore = 0;
+      for (const [col, score] of idColumnScores) {
+        if (score > bestScore) {
+          bestScore = score;
+          bestCol = col;
+        }
+      }
+      idCol = bestCol;
+    }
+  } else {
+    // Without target IDs: use pattern-based detection
+    // Look for columns with email patterns or numeric IDs
+    for (let c = 1; c <= maxCol1; c++) {
+      // Skip columns that are already identified as name columns
+      if (c === nameCol || c === nameCol2) continue;
+      
+      let idLikeCount = 0;
+      let totalRows = 0;
+      
+      for (let r = startRow1; r <= maxRow1; r++) {
+        const value = cellValue(ws, r, c);
+        totalRows++;
+        if (looksLikeId(value)) {
+          idLikeCount++;
+        }
+      }
+      
+      // Consider it an ID column if >50% of rows look like IDs
+      if (totalRows > 0 && idLikeCount / totalRows > 0.5) {
+        idColumnScores.set(c, idLikeCount);
+      }
+    }
+    
+    // Select the column with the most ID-like values
+    if (idColumnScores.size > 0) {
+      let bestCol = null;
+      let bestScore = 0;
+      for (const [col, score] of idColumnScores) {
+        if (score > bestScore) {
+          bestScore = score;
+          bestCol = col;
+        }
+      }
+      idCol = bestCol;
     }
   }
   
@@ -660,7 +816,54 @@ function buildStudentIndexForSheet(ws, targetIdsSet = null) {
 
   // Detect ID and name columns dynamically (once, before the loop)
   const { idCol, nameCol, nameCol2 } = detectIdAndNameColumns(ws, targetIdsSet);
-  const finalIdCol = idCol || 2; // fallback to original assumption
+  
+  // Smart fallback: if ID column not detected, try to find a column with email/numeric patterns
+  let finalIdCol = idCol;
+  if (!finalIdCol) {
+    const range = getSheetRange(ws);
+    if (range) {
+      const maxCol1 = range.e.c + 1;
+      const maxRow1 = Math.min(range.e.r + 1, 52); // Scan first 50 data rows
+      
+      // Look for a column that contains emails or numeric IDs (excluding name columns)
+      for (let c = 1; c <= maxCol1; c++) {
+        if (c === nameCol || c === nameCol2) continue; // Skip name columns
+        
+        let idLikeCount = 0;
+        let totalRows = 0;
+        
+        for (let r = 2; r <= maxRow1; r++) {
+          const value = cellValue(ws, r, c);
+          totalRows++;
+          if (value !== null && value !== undefined) {
+            const normalized = normalizeId(value);
+            if (normalized) {
+              // Check for email with numeric username or pure numeric ID
+              if (normalized.includes("@")) {
+                const username = normalized.split("@")[0];
+                if (/^\d+$/.test(username) && username.length > 5) {
+                  idLikeCount++;
+                }
+              } else if (/^\d+$/.test(normalized) && normalized.length > 5) {
+                idLikeCount++;
+              }
+            }
+          }
+        }
+        
+        // If >50% of rows look like IDs, use this column
+        if (totalRows > 0 && idLikeCount / totalRows > 0.5) {
+          finalIdCol = c;
+          break;
+        }
+      }
+    }
+    
+    // Last resort: fallback to column 2 (original assumption)
+    if (!finalIdCol) {
+      finalIdCol = 2;
+    }
+  }
 
   for (let r = 2; r <= maxRow1; r++) {
     const rawId = cellValue(ws, r, finalIdCol);

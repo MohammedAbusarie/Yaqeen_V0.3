@@ -24,8 +24,15 @@ const els = {
   editorTask: domGet("editorTask"),
   editorSheetUrl: domGet("editorSheetUrl"),
   editorXlsxFile: domGet("editorXlsxFile"),
+  editorInputMethodFile: domGet("editorInputMethodFile"),
+  editorInputMethodTextarea: domGet("editorInputMethodTextarea"),
+  editorInputFileContainer: domGet("editorInputFileContainer"),
+  editorInputTextareaContainer: domGet("editorInputTextareaContainer"),
   editorInputTxt: domGet("editorInputTxt"),
+  editorInputTextarea: domGet("editorInputTextarea"),
   btnEditorDownload: domGet("btnEditorDownload"),
+  btnDownloadModifiedRecords: domGet("btnDownloadModifiedRecords"),
+  btnDownloadOriginalRecords: domGet("btnDownloadOriginalRecords"),
   editorStatus: domGet("editorStatus"),
 
   // Wizard
@@ -137,6 +144,8 @@ if (els.navAbout) {
 els.btnDownloadJson?.addEventListener("click", handlers.handleDownloadJson);
 els.btnDownloadTxt?.addEventListener("click", handlers.handleDownloadTxt);
 els.btnDownloadPdf?.addEventListener("click", handlers.handleDownloadPdf);
+els.btnDownloadModifiedRecords?.addEventListener("click", handlers.handleDownloadModifiedRecords);
+els.btnDownloadOriginalRecords?.addEventListener("click", handlers.handleDownloadOriginalRecords);
 els.loadReportJson?.addEventListener("change", handlers.handleLoadPreviousReportJson);
 
 // Editor wiring (Inputs view)
@@ -156,7 +165,10 @@ els.editorScope?.addEventListener("change", handlers.handleEditorSelectionChange
 els.editorSheet?.addEventListener("change", handlers.handleEditorSelectionChanged);
 els.editorColumn?.addEventListener("change", handlers.handleEditorSelectionChanged);
 els.editorTask?.addEventListener("change", handlers.handleEditorTaskChanged);
+els.editorInputMethodFile?.addEventListener("change", handlers.handleEditorInputMethodChanged);
+els.editorInputMethodTextarea?.addEventListener("change", handlers.handleEditorInputMethodChanged);
 els.editorInputTxt?.addEventListener("change", handlers.handleEditorInputChanged);
+els.editorInputTextarea?.addEventListener("input", handlers.handleEditorTextareaChanged);
 
 // Editor wiring (Reports view - buttons are in Reports view now)
 els.btnEditorDownload?.addEventListener("click", handlers.handleEditorDownloadModified);
@@ -201,6 +213,13 @@ els.btnOcrReset?.addEventListener("click", handlers.handleOcrReset);
 switchView('inputs');
 try {
   handlers.updateWizardUI?.();
+  // Initialize input method UI (show file input by default)
+  if (els.editorInputFileContainer) {
+    els.editorInputFileContainer.style.display = "block";
+  }
+  if (els.editorInputTextareaContainer) {
+    els.editorInputTextareaContainer.style.display = "none";
+  }
 } catch (e) {
   console.error("Error initializing wizard UI:", e);
 }

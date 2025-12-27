@@ -28,7 +28,10 @@ export function createInitialState() {
       taskType: "attendance", // 'attendance' | 'grade'
 
       // input + preview
+      inputMethod: "file", // 'file' | 'textarea'
       inputFileName: "",
+      inputTextContent: null, // For textarea input
+      originalInputData: null, // Store original parsed data for download
       previewRows: null,
       columnMap: null,
       selectedColumn: null,

@@ -168,7 +168,15 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
         els.wizardSummaryColumn.textContent = columnText;
       }
       if (els.wizardSummaryTask) els.wizardSummaryTask.textContent = ed.taskType === "attendance" ? "Attendance input" : "Grade input";
-      if (els.wizardSummaryInput) els.wizardSummaryInput.textContent = ed.inputFileName || "-";
+      if (els.wizardSummaryInput) {
+        // Show different text based on input method
+        if (ed.inputMethod === "file") {
+          els.wizardSummaryInput.textContent = ed.inputFileName || "-";
+        } else {
+          const lineCount = ed.inputTextContent ? ed.inputTextContent.split('\n').length : 0;
+          els.wizardSummaryInput.textContent = lineCount > 0 ? `Text area (${lineCount} lines)` : "-";
+        }
+      }
     }
   }
 
@@ -182,9 +190,19 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
         const needsSheet = ed.scopeMode === "single";
         return Boolean(ed.selectedColumnKey) && (!needsSheet || Boolean(ed.selectedSheetName));
       case 3:
-        return Boolean(ed.inputFileName);
+        // Check if we have valid input based on input method
+        if (ed.inputMethod === "file") {
+          // File mode: check if a file is selected
+          return Boolean(els.editorInputTxt?.files?.[0]);
+        } else {
+          // Textarea mode: check if textarea has content
+          return Boolean(ed.inputTextContent && ed.inputTextContent.trim());
+        }
       case 4:
-        return ed.workbookLoaded && Boolean(ed.selectedColumnKey) && Boolean(ed.inputFileName);
+        return ed.workbookLoaded && Boolean(ed.selectedColumnKey) && (
+          (ed.inputMethod === "file" && Boolean(els.editorInputTxt?.files?.[0])) ||
+          (ed.inputMethod === "textarea" && Boolean(ed.inputTextContent && ed.inputTextContent.trim()))
+        );
       default:
         return false;
     }
@@ -320,6 +338,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     function renderPreviewRow(r, delimiter) {
       const tr = document.createElement("tr");
       if (r.match_status === "notFound" || r.match_status === "ambiguous") tr.classList.add("row--missing");
+      if (r.discarded) tr.classList.add("row--discarded");
       if (delimiter) tr.dataset.delimiter = delimiter;
       const td = (t) => {
         const cell = document.createElement("td");
@@ -359,6 +378,14 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       btnMarkWrong.dataset.action = "wrong";
       btnMarkWrong.dataset.index = String(r.index);
       actionsTd.appendChild(btnMarkWrong);
+
+      const btnDiscard = document.createElement("button");
+      btnDiscard.type = "button";
+      btnDiscard.className = "btn btn--ghost";
+      btnDiscard.textContent = r.discarded ? "Restore" : "Discard";
+      btnDiscard.dataset.action = "discard";
+      btnDiscard.dataset.index = String(r.index);
+      actionsTd.appendChild(btnDiscard);
 
       if (String(state.editor.taskType || "") === "grade") {
         const btnEdit = document.createElement("button");
@@ -622,10 +649,36 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     syncEditorUiFromState();
   }
 
+  function handleEditorInputMethodChanged() {
+    const isFile = els.editorInputMethodFile?.checked;
+    state.editor.inputMethod = isFile ? "file" : "textarea";
+    
+    // Show/hide appropriate input containers
+    if (els.editorInputFileContainer) {
+      els.editorInputFileContainer.style.display = isFile ? "block" : "none";
+    }
+    if (els.editorInputTextareaContainer) {
+      els.editorInputTextareaContainer.style.display = isFile ? "none" : "block";
+    }
+    
+    // Update wizard UI to check if we can proceed
+    updateWizardUI();
+  }
+
   function handleEditorInputChanged() {
     const f = els.editorInputTxt?.files?.[0] || null;
     state.editor.inputFileName = f ? f.name : "";
     syncEditorUiFromState();
+    updateWizardUI();
+  }
+
+  function handleEditorTextareaChanged() {
+    const textarea = els.editorInputTextarea;
+    if (!textarea) return;
+    
+    const content = String(textarea.value || "").trim();
+    state.editor.inputTextContent = content || null;
+    
     updateWizardUI();
   }
 
@@ -643,10 +696,20 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       if (!colKey) throw new ValidationError("Please select a target column.");
       if (ed.scopeMode === "single" && !ed.selectedSheetName) throw new ValidationError("Please select a sheet.");
 
-      const inputFile = els.editorInputTxt?.files?.[0] || null;
-      if (!inputFile) throw new ValidationError("Input .txt file is required.");
+      // Get input text - either from file or textarea
+      let inputText;
+      if (ed.inputMethod === "file") {
+        const inputFile = els.editorInputTxt?.files?.[0] || null;
+        if (!inputFile) throw new ValidationError("Input .txt file is required.");
+        inputText = await readFileAsText(inputFile);
+      } else {
+        // textarea mode
+        inputText = ed.inputTextContent;
+        if (!inputText || !inputText.trim()) {
+          throw new ValidationError("Please enter input data in the text area.");
+        }
+      }
 
-      const inputText = await readFileAsText(inputFile);
       const task = String(ed.taskType || "attendance");
 
       let preview;
@@ -666,6 +729,13 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
           attendanceIdsSet: parsed.targetIdsSet,
           gradesRows: null,
         });
+        
+        // Store original parsed data for download functionality
+        ed.originalInputData = {
+          type: "attendance",
+          orderedEntries: parsed.orderedEntries,
+          idsSet: parsed.targetIdsSet,
+        };
       } else {
         const parsed = parseGradesText(inputText);
         orderedEntries = parsed.orderedEntries; // Store for delimiter rendering
@@ -678,6 +748,13 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
           attendanceIdsSet: null,
           gradesRows: parsed.rows, // Use rows array from parsed result
         });
+        
+        // Store original parsed data for download functionality
+        ed.originalInputData = {
+          type: "grade",
+          orderedEntries: parsed.orderedEntries,
+          rows: parsed.rows,
+        };
       }
 
       ed.previewRows = preview.preview_rows;
@@ -707,6 +784,8 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
 
       // enable download buttons
       if (els.btnEditorDownload) els.btnEditorDownload.disabled = false;
+      if (els.btnDownloadModifiedRecords) els.btnDownloadModifiedRecords.disabled = false;
+      if (els.btnDownloadOriginalRecords) els.btnDownloadOriginalRecords.disabled = false;
       if (els.btnDownloadJson) els.btnDownloadJson.disabled = false;
       if (els.btnDownloadTxt) els.btnDownloadTxt.disabled = false;
       if (els.btnDownloadPdf) els.btnDownloadPdf.disabled = false;
@@ -804,6 +883,14 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       if (row) {
         row.match_status = "ambiguous";
         row.note = "Marked as wrong match by user.";
+        renderEditorPreview();
+      }
+    }
+    if (action === "discard") {
+      const row = state.editor.previewRows.find((r) => Number(r.index) === idx);
+      if (row) {
+        // Toggle discarded state
+        row.discarded = !row.discarded;
         renderEditorPreview();
       }
     }
@@ -948,8 +1035,11 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       const highlightEnabled = ed.highlightEnabled ?? true;
       const highlightColor = ed.highlightColor ?? "#FFFF00";
       
+      // Filter out discarded records before applying edits
+      const activeRows = rows.filter((r) => !r.discarded);
+      
       // Apply edits with highlight settings
-      applyEditorEdits(wb, rows, highlightEnabled, highlightColor);
+      applyEditorEdits(wb, activeRows, highlightEnabled, highlightColor);
 
       if (!window.XLSX || !window.XLSX.write) {
         throw new ProcessingError("XLSX writer not loaded. Please refresh the page.");
@@ -971,7 +1061,9 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
 
       // Final report is already rendered in the textarea; keep it visible and update status.
       const highlightMsg = highlightEnabled ? " (with highlighted cells)" : "";
-      setEditorStatus(`Downloaded modified file${highlightMsg}. Final column mapping report is shown below.`, "ok");
+      const discardedCount = rows.length - activeRows.length;
+      const discardedMsg = discardedCount > 0 ? ` ${discardedCount} discarded record(s) were excluded.` : "";
+      setEditorStatus(`Downloaded modified file${highlightMsg}.${discardedMsg} Final column mapping report is shown below.`, "ok");
     } catch (e) {
       const msg =
         e instanceof ValidationError || e instanceof FileError || e instanceof ProcessingError
@@ -1242,18 +1334,171 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     }
   }
 
+  function handleDownloadModifiedRecords() {
+    try {
+      const ed = state.editor;
+      const rows = Array.isArray(ed.previewRows) ? ed.previewRows : [];
+      if (!rows.length) {
+        throw new ValidationError("Please generate a preview first.");
+      }
+
+      const taskType = ed.taskType || "attendance";
+      const lines = [];
+
+      if (taskType === "attendance") {
+        // For attendance: output only matched IDs from preview (excluding discarded)
+        // Preserve delimiter structure from orderedEntries
+        if (Array.isArray(ed.orderedEntries) && ed.orderedEntries.length > 0) {
+          // Build a map of ID -> preview row for quick lookup
+          const rowMap = new Map();
+          for (const r of rows) {
+            if (r.student_id && !r.discarded) {
+              rowMap.set(r.student_id, r);
+            }
+          }
+
+          // Iterate through ordered entries and output modified data
+          for (const entry of ed.orderedEntries) {
+            if (entry && typeof entry === "object") {
+              if (entry.type === "title") {
+                lines.push(entry.title || "");
+              } else if (entry.type === "id") {
+                const previewRow = rowMap.get(entry.id);
+                // Only include if found in preview AND not discarded
+                if (previewRow) {
+                  // Use the student_id from preview (in case it was manually fixed)
+                  lines.push(previewRow.student_id);
+                }
+              }
+            }
+          }
+        } else {
+          // Fallback: just list IDs from preview rows (excluding discarded)
+          for (const r of rows) {
+            if (r.student_id && !r.discarded) {
+              lines.push(r.student_id);
+            }
+          }
+        }
+      } else {
+        // For grades: preserve delimiter structure and output id,grade from preview
+        if (Array.isArray(ed.orderedEntries) && ed.orderedEntries.length > 0) {
+          // Build a map of ID -> preview row for quick lookup
+          const rowMap = new Map();
+          for (const r of rows) {
+            if (r.student_id && !r.discarded) {
+              rowMap.set(r.input_id || r.student_id, r);
+            }
+          }
+
+          // Iterate through ordered entries and output modified data
+          for (const entry of ed.orderedEntries) {
+            if (entry && typeof entry === "object") {
+              if (entry.type === "title") {
+                lines.push(entry.title || "");
+              } else if (entry.type === "id") {
+                const previewRow = rowMap.get(entry.id);
+                // Only include if found in preview AND not discarded
+                if (previewRow) {
+                  // Use the modified student_id and new_value from preview
+                  const grade = String(previewRow.new_value || "");
+                  lines.push(`${previewRow.student_id},${grade}`);
+                }
+              }
+            }
+          }
+        } else {
+          // Fallback: just list id,grade from preview rows (excluding discarded)
+          for (const r of rows) {
+            if (r.student_id && !r.discarded) {
+              lines.push(`${r.student_id},${r.new_value || ""}`);
+            }
+          }
+        }
+      }
+
+      const txtContent = lines.join("\n");
+      const base = safeBaseName(state.workbookName || "workbook");
+      const filename = `${base}_modified_records.txt`;
+      downloadBlob(filename, txtContent, "text/plain;charset=utf-8");
+
+      setEditorStatus("Downloaded modified records as text file.", "ok");
+    } catch (e) {
+      const msg = e instanceof ValidationError ? e.message : `Error: ${e?.message || String(e)}`;
+      setEditorStatus(msg, "error");
+    }
+  }
+
+  function handleDownloadOriginalRecords() {
+    try {
+      const ed = state.editor;
+      const originalData = ed.originalInputData;
+      if (!originalData) {
+        throw new ValidationError("No original input data available. Please generate a preview first.");
+      }
+
+      const lines = [];
+
+      if (originalData.type === "attendance") {
+        // For attendance: reconstruct from orderedEntries
+        if (Array.isArray(originalData.orderedEntries) && originalData.orderedEntries.length > 0) {
+          for (const entry of originalData.orderedEntries) {
+            if (entry && typeof entry === "object") {
+              if (entry.type === "title") {
+                lines.push(entry.title || "");
+              } else if (entry.type === "id") {
+                lines.push(entry.id);
+              }
+            }
+          }
+        }
+      } else if (originalData.type === "grade") {
+        // For grades: reconstruct from orderedEntries
+        if (Array.isArray(originalData.orderedEntries) && originalData.orderedEntries.length > 0) {
+          for (const entry of originalData.orderedEntries) {
+            if (entry && typeof entry === "object") {
+              if (entry.type === "title") {
+                lines.push(entry.title || "");
+              } else if (entry.type === "id") {
+                lines.push(`${entry.id},${entry.grade || ""}`);
+              }
+            }
+          }
+        }
+      }
+
+      if (lines.length === 0) {
+        throw new ValidationError("No original data to download.");
+      }
+
+      const txtContent = lines.join("\n");
+      const base = safeBaseName(state.workbookName || "workbook");
+      const filename = `${base}_original_records.txt`;
+      downloadBlob(filename, txtContent, "text/plain;charset=utf-8");
+
+      setEditorStatus("Downloaded original records as text file.", "ok");
+    } catch (e) {
+      const msg = e instanceof ValidationError ? e.message : `Error: ${e?.message || String(e)}`;
+      setEditorStatus(msg, "error");
+    }
+  }
+
   return {
     handleDownloadJson,
     handleDownloadTxt,
     handleLoadPreviousReportJson,
     handleDownloadPdf,
+    handleDownloadModifiedRecords,
+    handleDownloadOriginalRecords,
 
     // Editor handlers
     handleEditorXlsxUploadChanged,
     handleEditorLoadFile,
     handleEditorSelectionChanged,
     handleEditorTaskChanged,
+    handleEditorInputMethodChanged,
     handleEditorInputChanged,
+    handleEditorTextareaChanged,
     handleEditorBuildPreview,
     handleEditorPreviewModeChanged,
     handleEditorDownloadModified,

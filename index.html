@@ -136,12 +136,35 @@
                 </div>
 
                 <div class="field">
-                  <label for="editorInputTxt">Input file (<code>.txt</code>)</label>
-                  <input id="editorInputTxt" type="file" accept=".txt,text/plain" />
-                  <div class="hint">
-                    Attendance: list of IDs (same delimiters as attendance).<br>
-                    Grades: <code>id,grade</code> per line.
+                  <label>Input method</label>
+                  <div style="display: flex; gap: 16px; margin-top: 8px;">
+                    <label class="labelInline">
+                      <input id="editorInputMethodFile" type="radio" name="editorInputMethod" value="file" checked style="margin-right: 6px;" />
+                      Upload file
+                    </label>
+                    <label class="labelInline">
+                      <input id="editorInputMethodTextarea" type="radio" name="editorInputMethod" value="textarea" style="margin-right: 6px;" />
+                      Enter text
+                    </label>
                   </div>
+                </div>
+              </div>
+
+              <div class="field" id="editorInputFileContainer">
+                <label for="editorInputTxt">Input file (<code>.txt</code>)</label>
+                <input id="editorInputTxt" type="file" accept=".txt,text/plain" />
+                <div class="hint">
+                  Attendance: list of IDs (same delimiters as attendance).<br>
+                  Grades: <code>id,grade</code> per line.
+                </div>
+              </div>
+
+              <div class="field" id="editorInputTextareaContainer" style="display: none;">
+                <label for="editorInputTextarea">Enter data</label>
+                <textarea id="editorInputTextarea" rows="10" placeholder="Attendance: list of IDs (one per line, optional delimiter lines)&#10;Grades: id,grade per line"></textarea>
+                <div class="hint">
+                  Attendance: list of IDs (one per line). You can add delimiter/title lines between sections.<br>
+                  Grades: <code>id,grade</code> per line. You can add delimiter/title lines between sections.
                 </div>
               </div>
             </div>
@@ -288,6 +311,8 @@
                 <input id="highlightColorPicker" type="color" value="#FFFF00" title="Select highlight color" style="margin-left: 8px; height: 32px; width: 50px; cursor: pointer;" />
               </div>
               <button id="btnEditorDownload" class="btn" type="button" disabled>Download Modified File</button>
+              <button id="btnDownloadModifiedRecords" class="btn" type="button" disabled>Download Modified Records</button>
+              <button id="btnDownloadOriginalRecords" class="btn" type="button" disabled>Download Original Records</button>
               <button id="btnDownloadJson" class="btn" type="button" disabled>Download JSON</button>
               <button id="btnDownloadTxt" class="btn" type="button" disabled>Download TXT</button>
               <button id="btnDownloadPdf" class="btn" type="button" disabled>Download PDF</button>
