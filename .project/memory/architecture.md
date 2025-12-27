@@ -64,13 +64,29 @@
 │    - Render preview table (grouped-by-sheet or input-order)
 │    - Fix dialogs (search by ID/name) and manual grade edits (preview-only)
 │
+├── Sheet Merger (New Feature)
+│ ├── File: `src/sheetMerger.js`
+│ ├── Responsibilities:
+│ │  - Scan headers from rows 1-5 across all sheets
+│ │  - Extract all columns with sample data
+│ │  - Build drag-and-drop mapping matrix
+│ │  - Merge columns sequentially (Sheet1 rows, then Sheet2 rows, etc.)
+│ │  - Generate merged XLSX workbook
+│ │  - Optional: eliminate duplicate header rows
+│ └── Key functions:
+│    - `scanHeadersFromRows()`: detect headers in first 5 rows
+│    - `extractAllColumns()`: get all columns with metadata
+│    - `mergeColumnsSequentially()`: concatenate mapped columns
+│    - `generateMergedWorkbook()`: export merged data as XLSX
+│
 └── Internal Utilities
    ├── `src/state.js`: in-memory state container + reset
-   ├── `src/navigation.js`: view switching (Inputs/Report/About)
+   ├── `src/navigation.js`: view switching (Inputs/Report/OCR/SheetMerger/About)
    ├── `src/metadata.js`: report metadata + safe filenames
    ├── `src/fileRead.js`: File → ArrayBuffer/Text helpers
    ├── `src/dom.js`: DOM id lookup + blob download helper
-   └── `src/uiStatus.js`: status + loading UI
+   ├── `src/uiStatus.js`: status + loading UI
+   └── `src/ocr.js`: OCR processing with Tesseract.js
 
 ## Data Models
 - **Student IDs input (`.txt`) → `ParsedStudentIds`** (`attendance.js`)
@@ -87,6 +103,10 @@
   - `sheets`: per sheet `{name, column, header_row, students[]}`
   - `not_found`: `string[]`
   - optional: `input_order`, `ordered_rows`, `id_counts`
+- **Sheet Merger Data Models** (`src/sheetMerger.js`)
+  - `ColumnInfo`: `{sheet, columnIndex, headerText, headerRow, columnLetter, sampleValues, key}`
+  - `MergedData`: `{rows, headers, totalRows, totalColumns, sourceSheets}`
+  - Mapping structure: `{[sheetName]: {[position]: columnKey}}`
 
 ## API Contract
 - **No backend API**. Everything runs in-browser.
@@ -109,6 +129,6 @@
   - Large sheets may take noticeable time to scan (loops across sheets/rows)
 
 ## Last Updated
-2025-12-17 | Approved by [Human]
+2025-12-27 | Added Sheet Merger feature
 
 

@@ -54,6 +54,23 @@ export function createInitialState() {
       approvedIds: [],
       currentStep: 1, // 1: upload, 2: processing, 3: review
     },
+    sheetMerger: {
+      // Sheet Merger feature state
+      workbookArrayBuffer: null,
+      workbookName: null,
+      workbookLoaded: false,
+      workbookSheetNames: [],
+      allColumns: [], // {sheet, columnIndex, headerText, headerRow, sampleValues}
+      mapping: {}, // {[sheetName]: {[position]: columnKey}}
+      mergedData: null,
+      previewRows: [],
+      previewRowsLoaded: 100, // Number of rows to display in preview (starts at 100)
+      eliminateHeaders: false,
+      expandedSheets: [], // Track which sheet groups are expanded
+      searchQuery: "", // Current search filter text
+      maxPositions: 10, // Dynamic column count, start with 10
+      sheetColors: {}, // Map of sheet name to color for visual identification
+    },
   };
 }
 

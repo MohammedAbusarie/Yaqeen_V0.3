@@ -1,10 +1,17 @@
 # Features & Roadmap
 
 ## Current Development
-- Feature: Baseline static attendance report tool (XLSX + Student IDs → Report JSON/TXT/PDF)
-- Status: Stable / Maintenance
+- Feature: Sheet Merger - Drag-and-drop column mapping to merge multiple sheets
+- Status: Completed (2025-12-27)
 - Owner: Mohammed Abusarie
-- Target completion: N/A
+- Description: Allows users to upload XLSX/ODS files or Google Sheet links, map columns from multiple sheets using drag-and-drop interface, and download a single merged output. Supports header detection (rows 1-5), sequential row concatenation, and optional duplicate header elimination.
+
+## Completed Features
+- ✅ Baseline static attendance report tool (XLSX + Student IDs → Report JSON/TXT/PDF)
+- ✅ In-browser workbook editor with preview/fix/confirm workflow
+- ✅ OCR experimental feature for attendance sheet image processing
+- ✅ Sheet Merger with drag-and-drop column mapping (2025-12-27)
+- ✅ Sheet Merger UX improvements: accordion grouping, search filtering, column counts (2025-12-27)
 
 ## Approved Next
 - Feature: Improve Google Sheet URL reliability (reduce CORS failures via clearer UX + guidance; no backend)
@@ -18,6 +25,6 @@
 - Revisit date: Only with explicit human approval (architecture change)
 
 ## Last Reviewed
-2025-12-17 by Mohammed Abusarie
+2025-12-27 by Mohammed Abusarie
 
 

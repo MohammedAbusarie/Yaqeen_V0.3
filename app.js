@@ -9,10 +9,12 @@ const els = {
   navInputs: domGet("navInputs"),
   navReport: domGet("navReport"),
   navOcr: domGet("navOcr"),
+  navSheetMerger: domGet("navSheetMerger"),
   navAbout: domGet("navAbout"),
   viewInputs: domGet("viewInputs"),
   viewReport: domGet("viewReport"),
   viewOcr: domGet("viewOcr"),
+  viewSheetMerger: domGet("viewSheetMerger"),
   viewAbout: domGet("viewAbout"),
   
   // Editor (generic column edit)
@@ -89,6 +91,30 @@ const els = {
   btnOcrApprove: domGet("btnOcrApprove"),
   btnOcrReset: domGet("btnOcrReset"),
   ocrStatus: domGet("ocrStatus"),
+
+  // Sheet Merger
+  mergerSheetUrl: domGet("mergerSheetUrl"),
+  mergerXlsxFile: domGet("mergerXlsxFile"),
+  btnMergerLoadFile: domGet("btnMergerLoadFile"),
+  mergerColumnSearch: domGet("mergerColumnSearch"),
+  mergerColumnPool: domGet("mergerColumnPool"),
+  mergerMappingMatrix: domGet("mergerMappingMatrix"),
+  mergerColumnControls: domGet("mergerColumnControls"),
+  mergerEliminateHeaders: domGet("mergerEliminateHeaders"),
+  btnMergerAutoFill: domGet("btnMergerAutoFill"),
+  btnMergerGeneratePreview: domGet("btnMergerGeneratePreview"),
+  mergerPreviewRowCount: domGet("mergerPreviewRowCount"),
+  mergerPreviewColCount: domGet("mergerPreviewColCount"),
+  mergerPreviewSheetCount: domGet("mergerPreviewSheetCount"),
+  mergerPreviewTableHead: domGet("mergerPreviewTableHead"),
+  mergerPreviewTableBody: domGet("mergerPreviewTableBody"),
+  btnMergerDownload: domGet("btnMergerDownload"),
+  btnMergerLoadMore: domGet("btnMergerLoadMore"),
+  btnMergerBack: domGet("btnMergerBack"),
+  btnMergerReset: domGet("btnMergerReset"),
+  mergerStatus: domGet("mergerStatus"),
+  mergerMappingStep: domGet("mergerMappingStep"),
+  mergerPreviewStep: domGet("mergerPreviewStep"),
 };
 
 const state = createInitialState();
@@ -134,6 +160,11 @@ if (els.navOcr) {
   els.navOcr.addEventListener("click", () => switchView('ocr'));
 } else {
   console.error("navOcr element not found");
+}
+if (els.navSheetMerger) {
+  els.navSheetMerger.addEventListener("click", () => switchView('sheetMerger'));
+} else {
+  console.error("navSheetMerger element not found");
 }
 if (els.navAbout) {
   els.navAbout.addEventListener("click", () => switchView('about'));
@@ -208,6 +239,22 @@ els.ocrImageUpload?.addEventListener("change", handlers.handleOcrImageUpload);
 els.btnOcrProcess?.addEventListener("click", handlers.handleOcrProcess);
 els.btnOcrApprove?.addEventListener("click", handlers.handleOcrApprove);
 els.btnOcrReset?.addEventListener("click", handlers.handleOcrReset);
+
+// Sheet Merger wiring
+els.btnMergerLoadFile?.addEventListener("click", handlers.handleMergerLoadFile);
+els.mergerColumnSearch?.addEventListener("input", handlers.handleMergerColumnSearch);
+els.mergerColumnPool?.addEventListener("click", handlers.handleMergerColumnGroupToggle);
+els.btnMergerGeneratePreview?.addEventListener("click", handlers.handleMergerGeneratePreview);
+els.btnMergerDownload?.addEventListener("click", handlers.handleMergerDownload);
+els.btnMergerLoadMore?.addEventListener("click", handlers.handleMergerLoadMore);
+els.btnMergerBack?.addEventListener("click", handlers.handleMergerBack);
+els.btnMergerReset?.addEventListener("click", handlers.handleMergerReset);
+els.mergerEliminateHeaders?.addEventListener("change", handlers.handleMergerEliminateHeaders);
+els.btnMergerAutoFill?.addEventListener("click", handlers.handleMergerAutoFill);
+els.mergerColumnPool?.addEventListener("dragstart", handlers.handleMergerColumnDragStart);
+els.mergerMappingMatrix?.addEventListener("dragover", handlers.handleMergerMatrixDragOver);
+els.mergerMappingMatrix?.addEventListener("drop", handlers.handleMergerMatrixDrop);
+els.mergerMappingMatrix?.addEventListener("click", handlers.handleMergerMatrixClick);
 
 // Initial state
 switchView('inputs');

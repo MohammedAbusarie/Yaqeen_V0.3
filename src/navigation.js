@@ -7,7 +7,7 @@
  * @param {'inputs'|'report'|'ocr'|'about'|string} viewName
  */
 export function switchView(getEl, viewName) {
-  const views = ["inputs", "report", "ocr", "about"];
+  const views = ["inputs", "report", "ocr", "sheetMerger", "about"];
   views.forEach((v) => {
     const viewEl = getEl(`view${v.charAt(0).toUpperCase() + v.slice(1)}`);
     const navBtn = getEl(`nav${v.charAt(0).toUpperCase() + v.slice(1)}`);
@@ -18,7 +18,7 @@ export function switchView(getEl, viewName) {
         if (navBtn) navBtn.classList.add("is-active");
       } else {
         viewEl.classList.remove("view--active");
-        if (v === "ocr") {
+        if (v === "ocr" || v === "sheetMerger") {
           viewEl.style.display = "none";
         }
         if (navBtn) navBtn.classList.remove("is-active");

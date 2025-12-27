@@ -29,6 +29,7 @@
         <button id="navInputs" class="appNav__btn is-active" type="button">Inputs</button>
         <button id="navReport" class="appNav__btn" type="button">Report</button>
         <button id="navOcr" class="appNav__btn" type="button">OCR (Experimental)</button>
+        <button id="navSheetMerger" class="appNav__btn" type="button">Sheet Merger</button>
         <button id="navAbout" class="appNav__btn" type="button">About</button>
       </nav>
     </header>
@@ -294,6 +295,153 @@
           </div>
 
           <div id="ocrStatus" class="status" style="margin-top: 20px;" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- Sheet Merger View -->
+      <section id="viewSheetMerger" class="view" style="display: none;">
+        <div class="card">
+          <div class="cardHeader">
+            <h2>📊 Sheet Merger</h2>
+            <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">
+              Merge columns from multiple sheets into a single output. Upload your workbook, map columns using drag-and-drop, and download the merged result.
+            </p>
+          </div>
+
+          <div class="sheetMergerWorkflow">
+            <!-- Step 1: Upload File -->
+            <div class="sheetMergerStep">
+              <h3 class="sheetMergerStep__title">Step 1: Upload Workbook</h3>
+              <div class="grid2">
+                <div class="field">
+                  <label for="mergerSheetUrl">Google Sheet URL (optional)</label>
+                  <input
+                    id="mergerSheetUrl"
+                    type="url"
+                    placeholder="https://docs.google.com/spreadsheets/d/.../edit"
+                    autocomplete="off"
+                  />
+                  <div class="hint">
+                    We'll try to download as <code>.xlsx</code>. If blocked by CORS, export manually: File → Download → Microsoft Excel (.xlsx), then upload below.
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="mergerXlsxFile">Upload workbook (<code>.xlsx</code> or <code>.ods</code>)</label>
+                  <input id="mergerXlsxFile" type="file" accept=".xlsx,.ods,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.oasis.opendocument.spreadsheet" />
+                  <div class="hint">Upload your Excel or OpenDocument workbook. If ODS fails, convert to XLSX first.</div>
+                </div>
+              </div>
+              <button id="btnMergerLoadFile" class="btn btn--primary" type="button" style="margin-top: 16px;">
+                Load Workbook
+              </button>
+            </div>
+
+            <!-- Step 2: Map Columns -->
+            <div class="sheetMergerStep" id="mergerMappingStep" style="display: none;">
+              <h3 class="sheetMergerStep__title">Step 2: Map Columns</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                Drag columns from the pool on the left to the matrix on the right. Each slot can hold one column. Columns will be concatenated sequentially (Sheet1 rows, then Sheet2 rows, etc.).
+              </p>
+
+              <div class="sheetMergerLayout">
+                <!-- Column Pool -->
+                <div class="columnPool">
+                  <div class="columnPool__header">
+                    <h4>Available Columns</h4>
+                    <div class="hint">Search or expand sheets below, then drag to matrix →</div>
+                  </div>
+                  <div class="columnPool__toolbar">
+                    <input 
+                      id="mergerColumnSearch" 
+                      type="text" 
+                      class="columnPool__search" 
+                      placeholder="🔍 Search columns..."
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div id="mergerColumnPool" class="columnPool__list">
+                    <!-- Dynamically populated with accordion groups -->
+                  </div>
+                </div>
+
+                <!-- Mapping Matrix -->
+                <div class="mappingMatrix">
+                  <div class="mappingMatrix__header">
+                    <div>
+                      <h4>Output Columns (Drag columns here)</h4>
+                      <div class="hint">Each row = one sheet, each column = output position</div>
+                    </div>
+                    <div id="mergerColumnControls" style="display: flex; gap: 8px; align-items: center;">
+                      <!-- Column control buttons will be added here by renderMappingMatrix -->
+                    </div>
+                  </div>
+                  <div id="mergerMappingMatrix" class="mappingMatrix__grid">
+                    <!-- Dynamically populated with drop zones -->
+                  </div>
+                </div>
+              </div>
+
+              <div class="field" style="margin-top: 20px;">
+                <label class="labelInline">
+                  <input id="mergerEliminateHeaders" type="checkbox" style="margin-right: 6px;" />
+                  Eliminate duplicate header rows (recommended when concatenating sheets)
+                </label>
+              </div>
+
+              <button id="btnMergerAutoFill" class="btn btn--secondary" type="button" style="margin-top: 16px;">
+                Auto-Fill Remaining Sheets
+              </button>
+              <div class="hint" style="margin-top: 4px; margin-bottom: 0;">
+                After mapping the first sheet row, click to automatically fill remaining sheets with matching columns (case-insensitive name match, within ±1 column position)
+              </div>
+
+              <button id="btnMergerGeneratePreview" class="btn btn--primary" type="button" style="margin-top: 16px;">
+                Generate Preview
+              </button>
+            </div>
+
+            <!-- Step 3: Preview & Download -->
+            <div class="sheetMergerStep" id="mergerPreviewStep" style="display: none;">
+              <h3 class="sheetMergerStep__title">Step 3: Review & Download</h3>
+              <div class="mergerPreviewSummary">
+                <div class="mergerPreviewSummary__item">
+                  <strong>Total Rows:</strong> <span id="mergerPreviewRowCount">0</span>
+                </div>
+                <div class="mergerPreviewSummary__item">
+                  <strong>Total Columns:</strong> <span id="mergerPreviewColCount">0</span>
+                </div>
+                <div class="mergerPreviewSummary__item">
+                  <strong>Source Sheets:</strong> <span id="mergerPreviewSheetCount">0</span>
+                </div>
+              </div>
+
+              <div class="tableWrap" style="max-height: 500px; overflow: auto; margin-top: 16px;">
+                <table class="table" aria-label="Merged data preview">
+                  <thead id="mergerPreviewTableHead">
+                    <!-- Dynamically populated -->
+                  </thead>
+                  <tbody id="mergerPreviewTableBody">
+                    <!-- Dynamically populated -->
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="mergerActions" style="margin-top: 20px; display: flex; gap: 12px;">
+                <button id="btnMergerDownload" class="btn btn--primary" type="button">
+                  Download Merged File (.xlsx)
+                </button>
+                <button id="btnMergerLoadMore" class="btn btn--secondary" type="button" style="display: none;">
+                  Load More Rows
+                </button>
+                <button id="btnMergerBack" class="btn btn--ghost" type="button">
+                  Back
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="mergerStatus" class="status" style="margin-top: 20px;" aria-live="polite"></div>
         </div>
       </section>
 

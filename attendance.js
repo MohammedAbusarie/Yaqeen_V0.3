@@ -285,6 +285,8 @@ export function readWorkbookFromArrayBuffer(arrayBuffer) {
       type: "array",
       cellDates: false,
       defval: "", // Default value for empty cells
+      cellFormula: false, // Ignore formulas, read calculated values only
+      cellStyles: false, // Ignore cell styles to avoid parsing issues
     });
     return wb;
   } catch (error) {
@@ -299,6 +301,8 @@ export function readWorkbookFromArrayBuffer(arrayBuffer) {
           cellDates: false,
           defval: "",
           raw: true, // Use raw values to avoid type conversion issues
+          cellFormula: false, // Ignore formulas, read calculated values
+          cellStyles: false, // Ignore styles
         });
         
         // Convert raw values to strings where needed (only process existing cells)
@@ -313,6 +317,20 @@ export function readWorkbookFromArrayBuffer(arrayBuffer) {
             
             const cell = ws[cellAddress];
             if (!cell) continue;
+            
+            // If cell has a formula but no calculated value, try to extract from w attribute
+            if (cell.f && (cell.v === undefined || cell.v === null)) {
+              // Try to get the calculated value from the w (formatted text) attribute
+              if (cell.w !== undefined && cell.w !== null) {
+                // Use the formatted text as fallback
+                cell.v = cell.w;
+                cell.t = "s";
+              } else {
+                // If no calculated value available, set to empty
+                cell.v = "";
+                cell.t = "s";
+              }
+            }
             
             // Ensure cell has a valid value
             if (cell.v === undefined || cell.v === null) {
