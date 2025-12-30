@@ -12,6 +12,7 @@ import {
   parseStudentIdsText,
   computeEditorPreview,
   readWorkbookFromArrayBuffer,
+  normalizeId,
 } from "../attendance.js";
 import { safeBaseName } from "./metadata.js";
 import { downloadBlob } from "./dom.js";
@@ -346,6 +347,13 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       const tr = document.createElement("tr");
       if (r.match_status === "notFound" || r.match_status === "ambiguous") tr.classList.add("row--missing");
       if (r.discarded) tr.classList.add("row--discarded");
+      // Check for duplicate IDs
+      if (ed.idCounts && r.student_id) {
+        const normalizedId = normalizeId(r.student_id);
+        if (normalizedId && ed.idCounts[normalizedId] && ed.idCounts[normalizedId] > 1) {
+          tr.classList.add("row--duplicate");
+        }
+      }
       if (delimiter) tr.dataset.delimiter = delimiter;
       const td = (t) => {
         const cell = document.createElement("td");
@@ -721,9 +729,11 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
 
       let preview;
       let orderedEntries = null;
+      let idCounts = null;
       if (task === "attendance") {
         const parsed = parseStudentIdsText(inputText);
         orderedEntries = parsed.orderedEntries; // Store for delimiter rendering
+        idCounts = parsed.idCounts; // Extract idCounts for duplicate detection
         const orderedIds = parsed.orderedEntries
           .filter((x) => x && typeof x === "object" && x.type === "id")
           .map((x) => String(x.id));
@@ -746,6 +756,14 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       } else {
         const parsed = parseGradesText(inputText);
         orderedEntries = parsed.orderedEntries; // Store for delimiter rendering
+        // Calculate idCounts from orderedEntries for grades
+        idCounts = {};
+        for (const entry of parsed.orderedEntries || []) {
+          if (entry && typeof entry === "object" && entry.type === "id" && entry.id) {
+            const sid = entry.id;
+            idCounts[sid] = (idCounts[sid] || 0) + 1;
+          }
+        }
         preview = computeEditorPreview({
           workbook: wb,
           scope,
@@ -768,6 +786,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       ed.columnMap = preview.column_map;
       ed.selectedColumn = preview.selected_column;
       ed.orderedEntries = orderedEntries; // Store delimiter information (works for both attendance and grades)
+      ed.idCounts = idCounts; // Store idCounts for duplicate highlighting
       editorSearchRows = buildStudentSearchRows(wb, scope);
 
       // enable preview sheet filter

@@ -36,6 +36,7 @@ export function createInitialState() {
       columnMap: null,
       selectedColumn: null,
       orderedEntries: null, // For preserving delimiter/title information in ordered view
+      idCounts: null, // Track duplicate ID counts for highlighting
       columnOptions: null, // For column search functionality
       // user edits in preview
       manualEditsByIndex: {}, // preview index -> partial overrides

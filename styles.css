@@ -1026,6 +1026,15 @@ code {
   opacity: 0.7;
 }
 
+.row--duplicate td {
+  background: var(--warning-subtle);
+  color: var(--warning);
+}
+
+.row--duplicate:hover td {
+  background: rgba(251, 191, 36, 0.18);
+}
+
 .row--delimiter {
   background: var(--surface-elevated);
 }
