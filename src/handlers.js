@@ -1378,21 +1378,25 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
         // For attendance: output only matched IDs from preview (excluding discarded)
         // Preserve delimiter structure from orderedEntries
         if (Array.isArray(ed.orderedEntries) && ed.orderedEntries.length > 0) {
-          // Build a map of ID -> preview row for quick lookup
+          // Build a map of index -> preview row for quick lookup
+          // Use index instead of student_id to handle duplicate IDs correctly
           const rowMap = new Map();
           for (const r of rows) {
-            if (r.student_id && !r.discarded) {
-              rowMap.set(r.student_id, r);
+            if (r.index !== undefined && r.index !== null && !r.discarded) {
+              rowMap.set(Number(r.index), r);
             }
           }
 
           // Iterate through ordered entries and output modified data
+          // Track ID position counter (only increments for ID entries, not titles)
+          let idCounter = 0;
           for (const entry of ed.orderedEntries) {
             if (entry && typeof entry === "object") {
               if (entry.type === "title") {
                 lines.push(entry.title || "");
               } else if (entry.type === "id") {
-                const previewRow = rowMap.get(entry.id);
+                idCounter += 1;
+                const previewRow = rowMap.get(idCounter);
                 // Only include if found in preview AND not discarded
                 if (previewRow) {
                   // Use the student_id from preview (in case it was manually fixed)
@@ -1412,21 +1416,25 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       } else {
         // For grades: preserve delimiter structure and output id,grade from preview
         if (Array.isArray(ed.orderedEntries) && ed.orderedEntries.length > 0) {
-          // Build a map of ID -> preview row for quick lookup
+          // Build a map of index -> preview row for quick lookup
+          // Use index instead of input_id/student_id to handle duplicate IDs correctly
           const rowMap = new Map();
           for (const r of rows) {
-            if (r.student_id && !r.discarded) {
-              rowMap.set(r.input_id || r.student_id, r);
+            if (r.index !== undefined && r.index !== null && !r.discarded) {
+              rowMap.set(Number(r.index), r);
             }
           }
 
           // Iterate through ordered entries and output modified data
+          // Track ID position counter (only increments for ID entries, not titles)
+          let idCounter = 0;
           for (const entry of ed.orderedEntries) {
             if (entry && typeof entry === "object") {
               if (entry.type === "title") {
                 lines.push(entry.title || "");
               } else if (entry.type === "id") {
-                const previewRow = rowMap.get(entry.id);
+                idCounter += 1;
+                const previewRow = rowMap.get(idCounter);
                 // Only include if found in preview AND not discarded
                 if (previewRow) {
                   // Use the modified student_id and new_value from preview
