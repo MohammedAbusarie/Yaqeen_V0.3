@@ -347,10 +347,11 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       const tr = document.createElement("tr");
       if (r.match_status === "notFound" || r.match_status === "ambiguous") tr.classList.add("row--missing");
       if (r.discarded) tr.classList.add("row--discarded");
-      // Check for duplicate IDs
-      if (ed.idCounts && r.student_id) {
-        const normalizedId = normalizeId(r.student_id);
-        if (normalizedId && ed.idCounts[normalizedId] && ed.idCounts[normalizedId] > 1) {
+      // Check for duplicate IDs - use input_id (from input file) not student_id (from workbook match)
+      if (ed.idCounts && r.input_id) {
+        const normalizedId = normalizeId(r.input_id);
+        const count = normalizedId ? (ed.idCounts[normalizedId] || 0) : 0;
+        if (count > 1) {
           tr.classList.add("row--duplicate");
         }
       }
@@ -756,12 +757,14 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       } else {
         const parsed = parseGradesText(inputText);
         orderedEntries = parsed.orderedEntries; // Store for delimiter rendering
-        // Calculate idCounts from orderedEntries for grades
+        // Calculate idCounts from orderedEntries for grades - normalize IDs for consistent matching
         idCounts = {};
         for (const entry of parsed.orderedEntries || []) {
           if (entry && typeof entry === "object" && entry.type === "id" && entry.id) {
-            const sid = entry.id;
-            idCounts[sid] = (idCounts[sid] || 0) + 1;
+            const sid = normalizeId(entry.id);
+            if (sid) {
+              idCounts[sid] = (idCounts[sid] || 0) + 1;
+            }
           }
         }
         preview = computeEditorPreview({
