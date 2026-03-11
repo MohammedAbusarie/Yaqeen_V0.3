@@ -6,16 +6,16 @@ import { createHandlers } from "./src/handlers.js";
 
 const els = {
   // Navigation
-  navInputs: domGet("navInputs"),
-  navReport: domGet("navReport"),
-  navOcr: domGet("navOcr"),
-  navSheetMerger: domGet("navSheetMerger"),
+  navHome: domGet("navHome"),
   navAbout: domGet("navAbout"),
+  viewHome: domGet("viewHome"),
   viewInputs: domGet("viewInputs"),
   viewReport: domGet("viewReport"),
   viewOcr: domGet("viewOcr"),
   viewSheetMerger: domGet("viewSheetMerger"),
   viewAbout: domGet("viewAbout"),
+  featureSearch: domGet("featureSearch"),
+  featureCardsContainer: domGet("featureCardsContainer"),
   
   // Editor (generic column edit)
   editorScope: domGet("editorScope"),
@@ -146,31 +146,40 @@ const handlers = createHandlers({
 });
 
 // Wire up events
-if (els.navInputs) {
-  els.navInputs.addEventListener("click", () => switchView('inputs'));
-} else {
-  console.error("navInputs element not found");
-}
-if (els.navReport) {
-  els.navReport.addEventListener("click", () => switchView('report'));
-} else {
-  console.error("navReport element not found");
-}
-if (els.navOcr) {
-  els.navOcr.addEventListener("click", () => switchView('ocr'));
-} else {
-  console.error("navOcr element not found");
-}
-if (els.navSheetMerger) {
-  els.navSheetMerger.addEventListener("click", () => switchView('sheetMerger'));
-} else {
-  console.error("navSheetMerger element not found");
+if (els.navHome) {
+  els.navHome.addEventListener("click", () => switchView("home"));
 }
 if (els.navAbout) {
-  els.navAbout.addEventListener("click", () => switchView('about'));
-} else {
-  console.error("navAbout element not found");
+  els.navAbout.addEventListener("click", () => switchView("about"));
 }
+
+// Home: feature search filter
+if (els.featureSearch) {
+  els.featureSearch.addEventListener("input", () => {
+    const query = (els.featureSearch.value || "").trim().toLowerCase();
+    const cards = els.featureCardsContainer?.querySelectorAll(".featureCard") || [];
+    cards.forEach((card) => {
+      const searchText = (card.getAttribute("data-search") || card.textContent || "").toLowerCase();
+      const show = query === "" || searchText.includes(query);
+      card.classList.toggle("featureCard--hidden", !show);
+    });
+  });
+}
+
+// Home: feature card click -> switch to that view
+if (els.featureCardsContainer) {
+  els.featureCardsContainer.addEventListener("click", (e) => {
+    const card = e.target.closest(".featureCard");
+    if (!card) return;
+    const viewName = card.getAttribute("data-view");
+    if (viewName) switchView(viewName);
+  });
+}
+
+// Back to Home (from any feature view)
+document.body.addEventListener("click", (e) => {
+  if (e.target.closest(".btnBackToHome")) switchView("home");
+});
 
 els.btnDownloadJson?.addEventListener("click", handlers.handleDownloadJson);
 els.btnDownloadTxt?.addEventListener("click", handlers.handleDownloadTxt);
@@ -257,7 +266,7 @@ els.mergerMappingMatrix?.addEventListener("drop", handlers.handleMergerMatrixDro
 els.mergerMappingMatrix?.addEventListener("click", handlers.handleMergerMatrixClick);
 
 // Initial state
-switchView('inputs');
+switchView("home");
 try {
   handlers.updateWizardUI?.();
   // Initialize input method UI (show file input by default)

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Yaqeen — attendance, schedule maker, and deployable tools for educators. Client-side processing, privacy-first." />
     <title>Yaqeen</title>
+    <link rel="icon" href="./favicon.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -20,24 +21,61 @@
 
     <header class="appHeader">
       <div class="appHeader__title">
-        <h1>Yaqeen</h1>
+        <div class="appHeader__brand">
+          <img src="./Yaqeen%20Logo%20Clean%20Transparent.png" alt="" class="appHeader__logo" width="40" height="40" />
+          <h1>Yaqeen</h1>
+        </div>
         <p>Attendance, schedule maker & deployable tools • Time-saving • Privacy-first</p>
         <p style="margin-top: 4px; font-size: 13px; color: var(--text-muted);">Engineered by Mohammed Abusarie</p>
       </div>
       
       <nav class="appNav">
-        <button id="navInputs" class="appNav__btn is-active" type="button">Inputs</button>
-        <button id="navReport" class="appNav__btn" type="button">Report</button>
-        <button id="navOcr" class="appNav__btn" type="button">OCR (Experimental)</button>
-        <button id="navSheetMerger" class="appNav__btn" type="button">Sheet Merger</button>
+        <button id="navHome" class="appNav__btn is-active" type="button">Home</button>
         <button id="navAbout" class="appNav__btn" type="button">About</button>
       </nav>
     </header>
 
     <main class="appMain">
-      <!-- Inputs View -->
-      <section id="viewInputs" class="view view--active">
+      <!-- Home: Feature hub with search -->
+      <section id="viewHome" class="view view--active">
         <div class="card">
+          <div class="homeSearch">
+            <label for="featureSearch" class="visually-hidden">Search features</label>
+            <input id="featureSearch" type="text" placeholder="Search features..." autocomplete="off" class="homeSearch__input" />
+          </div>
+          <div id="featureCardsContainer" class="featureCardsGrid" role="list">
+            <button type="button" class="featureCard" data-view="inputs" data-search="attendance grades workbook edit mark input" role="listitem">
+              <span class="featureCard__title">Attendance & Grades</span>
+              <span class="featureCard__desc">Edit workbooks, mark attendance, input grades. Generate a preview and download the modified file.</span>
+            </button>
+            <button type="button" class="featureCard" data-view="report" data-search="attendance report view load upload json" role="listitem">
+              <span class="featureCard__title">Attendance Report</span>
+              <span class="featureCard__desc">View report results, upload a saved report JSON, or download JSON, TXT, PDF.</span>
+            </button>
+            <button type="button" class="featureCard" data-view="sheetMerger" data-search="sheet merger merge columns multiple sheets file xlsx" role="listitem">
+              <span class="featureCard__title">Sheet Merger</span>
+              <span class="featureCard__desc">Merge columns from multiple sheets into one file.</span>
+            </button>
+            <button type="button" class="featureCard" data-view="ocr" data-search="ocr attendance parser experimental extract student ids images" role="listitem">
+              <span class="featureCard__title">OCR Attendance Parser</span>
+              <span class="featureCard__badge">Experimental</span>
+              <span class="featureCard__desc">Extract student IDs from attendance sheet images.</span>
+            </button>
+            <button type="button" class="featureCard featureCard--disabled" data-search="qr deployable attendance tool exe coming soon" role="listitem" disabled aria-disabled="true">
+              <span class="featureCard__title">QR Deployable Attendance Tool</span>
+              <span class="featureCard__badge featureCard__badge--soon">Coming soon</span>
+              <span class="featureCard__desc">Standalone attendance tool you can deploy and run via QR.</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Inputs View -->
+      <section id="viewInputs" class="view">
+        <div class="card">
+          <div class="viewToolbar">
+            <button type="button" class="btn btn--ghost btnBackToHome" aria-label="Back to Home">← Back to Home</button>
+          </div>
           <h2>Edit Workbook (Attendance / Grades)</h2>
 
           <!-- Wizard Steps Indicator -->
@@ -216,6 +254,9 @@
       <!-- OCR Experimental Feature -->
       <section id="viewOcr" class="view" style="display: none;">
         <div class="card">
+          <div class="viewToolbar">
+            <button type="button" class="btn btn--ghost btnBackToHome" aria-label="Back to Home">← Back to Home</button>
+          </div>
           <div class="cardHeader">
             <h2>Experimental: OCR Attendance Parser</h2>
             <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">
@@ -301,6 +342,9 @@
       <!-- Sheet Merger View -->
       <section id="viewSheetMerger" class="view" style="display: none;">
         <div class="card">
+          <div class="viewToolbar">
+            <button type="button" class="btn btn--ghost btnBackToHome" aria-label="Back to Home">← Back to Home</button>
+          </div>
           <div class="cardHeader">
             <h2>Sheet Merger</h2>
             <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">
@@ -448,6 +492,9 @@
       <!-- Report View -->
       <section id="viewReport" class="view">
         <div class="card card--report">
+          <div class="viewToolbar">
+            <button type="button" class="btn btn--ghost btnBackToHome" aria-label="Back to Home">← Back to Home</button>
+          </div>
           <div class="cardHeader">
             <h2>Edit Preview & Report</h2>
             <div class="cardHeader__actions">
@@ -537,6 +584,7 @@
       <section id="viewAbout" class="view">
         <div class="card">
           <div class="aboutHeader">
+            <img src="./Yaqeen%20Logo%20Clean%20Transparent.png" alt="" class="aboutHeader__logo" width="120" height="120" />
             <h2>About Yaqeen</h2>
           </div>
           <div class="aboutContent aboutContent--compact">
@@ -547,7 +595,7 @@
               The name <b>Yaqeen</b> (يَقِين) means <b>certainty</b>—reliable automation you can trust so you can focus on teaching and students.
             </p>
             <p class="aboutText aboutText--muted">
-              Beta since December 2025. Feedback and feature ideas welcome: <a href="mailto:mohammed.abusarie@ecu.edu.eg">mohammed.abusarie@ecu.edu.eg</a>
+              Beta since December 2025. Feedback and feature ideas welcome: <a href="mailto:new.is.new55@gmail.com">new.is.new55@gmail.com</a>
             </p>
           </div>
         </div>
@@ -592,10 +640,12 @@
       </form>
     </dialog>
 
-    <footer class="footer">
-      <p>
-        <b>Tip:</b> If URL download fails, download the file manually: <b>Google Sheets</b> → <b>File → Download → Microsoft Excel (.xlsx)</b>, or <b>SharePoint</b> → <b>Download</b> (choose .xlsx, .ods, or .csv), then upload it above.
-      </p>
+    <footer class="footer" id="footer">
+      <div id="footerTip" class="footer__tip" style="display: none;">
+        <p>
+          <b>Tip:</b> If URL download fails, download the file manually: <b>Google Sheets</b> → <b>File → Download → Microsoft Excel (.xlsx)</b>, or <b>SharePoint</b> → <b>Download</b> (choose .xlsx, .ods, or .csv), then upload it above.
+        </p>
+      </div>
       <p style="margin-top: 8px; opacity: 0.8;">
         © <span id="footerYear"></span> Mohammed Abusarie
       </p>
