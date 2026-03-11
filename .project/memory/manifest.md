@@ -14,12 +14,21 @@
   - jsPDF (`window.jspdf`) + AutoTable (`doc.autoTable`)
 
 ## Last Updated
-2025-12-27
+2026-03-11
+
+## Documentation
+- **`docs/`** — Project documentation. Contains:
+  - **`docs/theme-legacy-colors.md`** — Legacy (pre–March 2026) website colors and theme identity (blue / dark blue-grey palette) for developer reference and design history.
 
 ## Memory Freshness Check
 - Design Patterns: ✓ Current
 - Known Bugs: ✓ Current
 - Architecture: ✓ Current
+
+## Website Identity (Current)
+- **Theme:** Dark black, red, white.
+- **Primary accent:** Red (e.g. `#dc2626`); backgrounds black/near-black; text white and light grey.
+- **Legacy theme:** Previous blue / dark blue-grey palette is documented in `docs/theme-legacy-colors.md`.
 
 ## Decision Log
 | Date | Decision | Approved/Rejected | Why | Notes |
@@ -29,5 +38,6 @@
 | 2025-12-17 | Add in-browser workbook editor (any column) with preview/fix/confirm download | Approved | Required feature: not limited to column W; supports grades and attendance | Implemented via new editor workflow in `index.html`, `src/handlers.js`, and `attendance.js` |
 | 2025-12-27 | Add Sheet Merger feature with drag-and-drop column mapping | Approved | University workflow tool: merge columns from multiple sheets with different structures | New module `src/sheetMerger.js`, handlers in `src/handlers.js`, UI in `index.html`, styles in `styles.css` |
 | 2025-12-27 | Improve Sheet Merger UX with accordion grouping and search | Approved | Better scalability for workbooks with many sheets/columns | Added accordion grouping by sheet, search filtering, column counts, expand/collapse functionality |
+| 2026-03-11 | Rebrand to dark black, red, white theme; remove emojis from UI | Approved | Major website identity update | Theme variables and gradients updated in `styles.css`; legacy colors documented in `docs/theme-legacy-colors.md`; docs folder referenced in this manifest |
 
 

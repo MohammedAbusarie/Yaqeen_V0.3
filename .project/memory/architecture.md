@@ -86,7 +86,8 @@
    ├── `src/fileRead.js`: File → ArrayBuffer/Text helpers
    ├── `src/dom.js`: DOM id lookup + blob download helper
    ├── `src/uiStatus.js`: status + loading UI
-   └── `src/ocr.js`: OCR processing with Tesseract.js
+   ├── `src/ocr.js`: OCR processing with Tesseract.js
+   └── **Documentation**: `docs/` — project docs; legacy theme colors in `docs/theme-legacy-colors.md` (see manifest for current identity)
 
 ## Data Models
 - **Student IDs input (`.txt`) → `ParsedStudentIds`** (`attendance.js`)
@@ -129,6 +130,6 @@
   - Large sheets may take noticeable time to scan (loops across sheets/rows)
 
 ## Last Updated
-2025-12-27 | Added Sheet Merger feature
+2026-03-11 | Docs folder added; theme identity documented (see `.project/memory/manifest.md` and `docs/theme-legacy-colors.md` for legacy palette)
 
 

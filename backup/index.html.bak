@@ -217,7 +217,7 @@
       <section id="viewOcr" class="view" style="display: none;">
         <div class="card">
           <div class="cardHeader">
-            <h2>Experimental: OCR Attendance Parser</h2>
+            <h2>📸 Experimental: OCR Attendance Parser</h2>
             <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">
               Upload attendance sheet images and automatically extract student IDs using OCR. Review and fix uncertain results before generating the text file.
             </p>
@@ -274,11 +274,11 @@
 
               <div class="ocrResults">
                 <div class="ocrResults__section">
-                  <h4>Confident Matches</h4>
+                  <h4>✅ Confident Matches</h4>
                   <div id="ocrConfidentList" class="ocrIdList"></div>
                 </div>
                 <div class="ocrResults__section">
-                  <h4>Needs Review</h4>
+                  <h4>⚠️ Needs Review</h4>
                   <div id="ocrUncertainList" class="ocrIdList"></div>
                 </div>
               </div>
@@ -302,7 +302,7 @@
       <section id="viewSheetMerger" class="view" style="display: none;">
         <div class="card">
           <div class="cardHeader">
-            <h2>Sheet Merger</h2>
+            <h2>📊 Sheet Merger</h2>
             <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">
               Merge columns from multiple sheets into a single output. Upload your workbook, map columns using drag-and-drop, and download the merged result.
             </p>
@@ -356,7 +356,7 @@
                       id="mergerColumnSearch" 
                       type="text" 
                       class="columnPool__search" 
-                      placeholder="Search columns..."
+                      placeholder="🔍 Search columns..."
                       autocomplete="off"
                     />
                   </div>

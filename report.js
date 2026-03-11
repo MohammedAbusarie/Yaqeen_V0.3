@@ -165,7 +165,7 @@ export function generateTextReport(reportData) {
 
   const sheets = Array.isArray(reportData?.sheets) ? reportData.sheets : [];
   for (const sheetData of sheets) {
-    lines.push(`📂 SHEET: ${sheetData.name}`);
+    lines.push(`SHEET: ${sheetData.name}`);
     lines.push(
       `   Column to Mark: ${sheetData.column} (Header: ${week} on Row ${sheetData.header_row})`
     );
@@ -185,7 +185,7 @@ export function generateTextReport(reportData) {
     lines.push("");
   }
 
-  lines.push("❌ NOT FOUND STUDENTS");
+  lines.push("NOT FOUND STUDENTS");
   lines.push("=====================");
   const notFound = Array.isArray(reportData?.not_found) ? reportData.not_found : [];
   if (notFound.length) {
