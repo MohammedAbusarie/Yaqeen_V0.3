@@ -756,6 +756,19 @@ a:hover {
   gap: 32px;
 }
 
+.aboutContent--compact {
+  gap: 20px;
+}
+
+.aboutContent--compact .aboutText {
+  margin-bottom: 0;
+}
+
+.aboutText--muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
 .aboutSection {
   position: relative;
   padding: 24px;
