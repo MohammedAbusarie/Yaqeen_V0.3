@@ -61,10 +61,10 @@
               <span class="featureCard__badge">Experimental</span>
               <span class="featureCard__desc">Extract student IDs from attendance sheet images.</span>
             </button>
-            <button type="button" class="featureCard featureCard--disabled" data-search="qr deployable attendance tool exe coming soon" role="listitem" disabled aria-disabled="true">
+            <button type="button" class="featureCard" data-view="qrTool" data-search="qr deployable attendance tool exe yaqeenscan download" role="listitem">
               <span class="featureCard__title">QR Deployable Attendance Tool</span>
-              <span class="featureCard__badge featureCard__badge--soon">Coming soon</span>
-              <span class="featureCard__desc">Standalone attendance tool you can deploy and run via QR.</span>
+              <span class="featureCard__badge">Download</span>
+              <span class="featureCard__desc">YaqeenScan: portable QR attendance for ECU. Download the Windows app.</span>
             </button>
           </div>
         </div>
@@ -576,6 +576,94 @@
                 <textarea id="editorFinalReportBox" readonly rows="4">(Generate preview first)</textarea>
               </div>
             </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- QR Deployable Attendance Tool (YaqeenScan) View -->
+      <section id="viewQrTool" class="view" style="display: none;">
+        <div class="card">
+          <div class="viewToolbar">
+            <button type="button" class="btn btn--ghost btnBackToHome" aria-label="Back to Home">← Back to Home</button>
+          </div>
+          <div class="cardHeader">
+            <h2>YaqeenScan — QR Attendance Tool</h2>
+            <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">
+              Portable, offline-capable QR-based attendance for ECU. Run on a professor’s Windows laptop; students scan, enter ID and name, submit. Export to CSV/XLSX.
+            </p>
+            <div class="qrToolDownloadBox" style="margin-top: 24px; padding: 20px; background: var(--surface-elevated); border: 2px solid var(--primary); border-radius: var(--radius-md); text-align: center;">
+              <p style="font-size: 16px; font-weight: 600; margin-bottom: 12px;">Download the Windows app (single .exe, no install required)</p>
+              <a href="./downloads/YaqeenScan.exe" download class="btn btn--primary" style="font-size: 18px; padding: 14px 28px;">
+                ↓ Download YaqeenScan.exe
+              </a>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 12px;">Windows only · Run as administrator recommended</p>
+            </div>
+          </div>
+
+          <div class="aboutContent" style="margin-top: 32px;">
+            <h3 style="font-size: 1.1rem; margin-bottom: 12px;">What is YaqeenScan?</h3>
+            <p class="aboutText">
+              YaqeenScan is a portable, offline-capable QR-based attendance system for the <b>Egyptian Chinese University (ECU)</b>. It runs on a professor’s Windows laptop: students scan a QR code, open the link on their phones, enter ID and name, and submit. The app records attendance locally, blocks duplicate submissions per device and per student, and can export to CSV/XLSX. Designed for LAN use (no internet required) and security (tokens, validation, optional host hardening). <b>Engineered by Mohammed Abusarie</b>; ECU red accent, dark theme.
+            </p>
+
+            <h3 style="font-size: 1.1rem; margin: 24px 0 12px;">Session &amp; course management</h3>
+            <ul class="aboutText" style="margin-left: 1.2em;">
+              <li><b>Start session:</b> Professor enters a course name; one active session at a time.</li>
+              <li><b>End session:</b> Closes the session and triggers automatic export.</li>
+              <li><b>Session timer:</b> Elapsed time shown in the professor GUI.</li>
+              <li><b>Stale session recovery:</b> On startup, any leftover active session from a previous run is auto-closed.</li>
+            </ul>
+
+            <h3 style="font-size: 1.1rem; margin: 24px 0 12px;">QR code &amp; student access</h3>
+            <ul class="aboutText" style="margin-left: 1.2em;">
+              <li><b>Rotating QR code:</b> Time-limited attendance URL; token rotates on a configurable interval (e.g. 100 s) with grace period for in-flight submissions.</li>
+              <li><b>Click-to-refresh:</b> Professor can click the QR (or URL) to rotate the token and show a new code immediately.</li>
+              <li><b>Auto-refresh:</b> QR panel and URL update when session/network status changes.</li>
+              <li><b>Network mode badge:</b> Shows “YaqeenScan Hotspot” or “LAN Fallback” so the professor knows how students should connect.</li>
+            </ul>
+
+            <h3 style="font-size: 1.1rem; margin: 24px 0 12px;">Student submission flow</h3>
+            <ul class="aboutText" style="margin-left: 1.2em;">
+              <li><b>Token-gated URL:</b> Only valid <code>/attend?token=...</code> links open the form; root and invalid tokens get a bland/404-style response.</li>
+              <li><b>Attendance form:</b> Student ID (alphanumeric, &gt;6 chars), full name (at least two words), submit button.</li>
+              <li><b>Success / error pages:</b> Dedicated templates with clear messages. Mobile-friendly, responsive student UI (dark theme).</li>
+            </ul>
+
+            <h3 style="font-size: 1.1rem; margin: 24px 0 12px;">Anti-fraud &amp; validation</h3>
+            <ul class="aboutText" style="margin-left: 1.2em;">
+              <li><b>Per-student one submission:</b> Same student ID cannot submit twice in the same session.</li>
+              <li><b>Per-device blocking:</b> After a successful submit, the device (MAC + fingerprint) is blocked from submitting again in that session.</li>
+              <li><b>Browser fingerprinting</b> and <b>MAC resolution</b> (via ARP) for device identity.</li>
+              <li><b>Signed “already submitted” cookie</b> (HttpOnly, SameSite=Strict) to prevent reuse of the same browser.</li>
+              <li><b>Rate limiting</b>, <b>CSRF protection</b>, and <b>input validation</b> with generic user-facing error messages.</li>
+            </ul>
+
+            <h3 style="font-size: 1.1rem; margin: 24px 0 12px;">Network &amp; connectivity</h3>
+            <ul class="aboutText" style="margin-left: 1.2em;">
+              <li><b>Windows WiFi hotspot:</b> Optional built-in hotspot (SSID/password configurable, e.g. “YaqeenScan”) so the laptop can be the access point; session continues if hotspot fails (LAN fallback).</li>
+              <li><b>LAN fallback:</b> If the hotspot is unavailable, professor and students can use the same existing LAN; server binds to a random high port.</li>
+            </ul>
+
+            <h3 style="font-size: 1.1rem; margin: 24px 0 12px;">Professor desktop GUI</h3>
+            <p class="aboutText">
+              Single main window with dark theme (ECU palette), CustomTkinter. Left panel: QR code + URL + network badge. Right panel: live attendance list (row number, student ID, name, submission time) with scroll. Session controls: Start Session (course name dialog), End Session, Export, About. Status bar with hotspot/network status and session timer. About dialog with product description and feature summary.
+            </p>
+
+            <h3 style="font-size: 1.1rem; margin: 24px 0 12px;">Export</h3>
+            <ul class="aboutText" style="margin-left: 1.2em;">
+              <li><b>Auto-export on session end:</b> Attendance exported to CSV and XLSX in the configured export folder.</li>
+              <li><b>Manual export:</b> “Export” button exports the current session’s attendance (same filenames, overwrite).</li>
+              <li>Formats: CSV (UTF-8), XLSX (attendance sheet, header styling, auto column width). Filename from course name (sanitized) and session date (e.g. Course_Name_YYYY-MM-DD.csv / .xlsx).</li>
+            </ul>
+
+            <h3 style="font-size: 1.1rem; margin: 24px 0 12px;">Platform &amp; deployment</h3>
+            <p class="aboutText">
+              <b>Windows-only.</b> Portable single EXE (e.g. PyInstaller build); templates/static bundled. SQLite DB (e.g. data/yaqeen.db) for sessions, attendance, and blocked devices. Admin (UAC) required for hotspot, firewall, ARP. Optional security hardening: firewall lockdown, NetBIOS/LLMNR disabled, ICS stopped during session; reverted on session end.
+            </p>
+
+            <p class="aboutText aboutText--muted" style="margin-top: 24px;">
+              Engineered by Mohammed Abusarie · Egyptian Chinese University (non-official tool) · YaqeenScan v1.0
+            </p>
           </div>
         </div>
       </section>
