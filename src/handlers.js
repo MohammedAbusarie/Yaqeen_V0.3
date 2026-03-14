@@ -50,6 +50,25 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     els.editorStatus.classList.toggle("is-ok", kind === "ok");
   }
 
+  /** Column option value encoding: key + location so dropdown and search stay in sync. Delimiter must not appear in sheet names. */
+  const COLUMN_VALUE_SEP = "||";
+
+  /**
+   * Deduplicate locations by (sheet, header_row, col_letter).
+   * @param {Array<{ sheet: string, header_row: number, col_letter: string }>} locations
+   * @returns {typeof locations}
+   */
+  function deduplicateLocations(locations) {
+    if (!Array.isArray(locations) || locations.length === 0) return locations;
+    const seen = new Set();
+    return locations.filter((loc) => {
+      const key = `${loc.sheet}\t${loc.header_row}\t${loc.col_letter}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function ensureWorkbookLoadedForEditor() {
     if (!state.workbookArrayBuffer) {
       throw new ValidationError("Please load a spreadsheet file first (.xlsx, .ods, or .csv - upload or URL).");
@@ -552,11 +571,15 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
         o0.textContent = "(Select column)";
         els.editorColumn.appendChild(o0);
         for (const opt of opts) {
-          const o = document.createElement("option");
-          o.value = opt.key;
           const tag = opt.kind === "unknown" ? "Unknown" : opt.kind === "lecture" ? "Lecture" : "Section";
-          o.textContent = `${opt.headerText} — ${tag} (${opt.occurrences})`;
-          els.editorColumn.appendChild(o);
+          const locs = deduplicateLocations(Array.isArray(opt.locations) ? opt.locations : []);
+          for (const loc of locs) {
+            const composite = `${opt.key}${COLUMN_VALUE_SEP}${loc.sheet}${COLUMN_VALUE_SEP}${loc.header_row}${COLUMN_VALUE_SEP}${loc.col_letter}`;
+            const o = document.createElement("option");
+            o.value = composite;
+            o.textContent = `${opt.headerText} — ${tag} — ${loc.sheet} (Row ${loc.header_row}, Col ${loc.col_letter})`;
+            els.editorColumn.appendChild(o);
+          }
         }
       }
       
@@ -574,6 +597,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       if (els.editorSheet) els.editorSheet.disabled = state.editor.scopeMode !== "single";
       editorSearchRows = [];
       state.editor.chosenStudents = [];
+      state.editor.selectedLocation = null;
       setEditorStatus("Workbook loaded. Select mode/sheet/column and upload the input file.", "ok");
       syncEditorUiFromState();
 
@@ -608,8 +632,19 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       
       if (els.editorSheet) state.editor.selectedSheetName = String(els.editorSheet.value || "");
       if (els.editorColumn) {
-        state.editor.selectedColumnKey = String(els.editorColumn.value || "");
-        // Clear search when column is selected from dropdown
+        const rawValue = String(els.editorColumn.value || "").trim();
+        const parts = rawValue ? rawValue.split(COLUMN_VALUE_SEP) : [];
+        if (parts.length === 4) {
+          state.editor.selectedColumnKey = parts[0];
+          state.editor.selectedLocation = {
+            sheet: parts[1],
+            header_row: Number.parseInt(parts[2], 10),
+            col_letter: parts[3],
+          };
+        } else {
+          state.editor.selectedColumnKey = rawValue || "";
+          state.editor.selectedLocation = null;
+        }
         if (els.editorColumnSearch) {
           els.editorColumnSearch.value = "";
         }
@@ -628,23 +663,44 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
 
         // Store column options for search functionality
         state.editor.columnOptions = opts;
-        
+
         if (els.editorColumn) {
-          const cur = state.editor.selectedColumnKey;
           els.editorColumn.innerHTML = "";
           const o0 = document.createElement("option");
           o0.value = "";
           o0.textContent = "(Select column)";
           els.editorColumn.appendChild(o0);
+          const ed = state.editor;
+          let selectedValue = "";
           for (const opt of opts) {
-            const o = document.createElement("option");
-            o.value = opt.key;
             const tag = opt.kind === "unknown" ? "Unknown" : opt.kind === "lecture" ? "Lecture" : "Section";
-            o.textContent = `${opt.headerText} — ${tag} (${opt.occurrences})`;
-            els.editorColumn.appendChild(o);
+            const locs = deduplicateLocations(Array.isArray(opt.locations) ? opt.locations : []);
+            for (const loc of locs) {
+              const composite = `${opt.key}${COLUMN_VALUE_SEP}${loc.sheet}${COLUMN_VALUE_SEP}${loc.header_row}${COLUMN_VALUE_SEP}${loc.col_letter}`;
+              const o = document.createElement("option");
+              o.value = composite;
+              o.textContent = `${opt.headerText} — ${tag} — ${loc.sheet} (Row ${loc.header_row}, Col ${loc.col_letter})`;
+              els.editorColumn.appendChild(o);
+              if (ed.selectedLocation && ed.selectedColumnKey === opt.key &&
+                  ed.selectedLocation.sheet === loc.sheet &&
+                  ed.selectedLocation.header_row === loc.header_row &&
+                  ed.selectedLocation.col_letter === loc.col_letter) {
+                selectedValue = composite;
+              }
+              if (!selectedValue && ed.selectedColumnKey === opt.key && !ed.selectedLocation) {
+                selectedValue = composite; // first occurrence for this key
+              }
+            }
           }
-          els.editorColumn.value = opts.some((x) => x.key === cur) ? cur : "";
-          state.editor.selectedColumnKey = String(els.editorColumn.value || "");
+          if (selectedValue && Array.from(els.editorColumn.options).some((opt) => opt.value === selectedValue)) {
+            els.editorColumn.value = selectedValue;
+          } else {
+            els.editorColumn.value = "";
+            if (!selectedValue && ed.selectedColumnKey) {
+              state.editor.selectedColumnKey = "";
+              state.editor.selectedLocation = null;
+            }
+          }
         }
         
         // Enable column search and clear previous search when mode/sheet changes
@@ -929,6 +985,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
             workbook: wb,
             scope,
             columnKey: colKey,
+            selectedLocation: ed.selectedLocation || undefined,
             taskType: "attendance",
             orderedAttendanceIds: orderedIds,
             attendanceIdsSet: targetIdsSet,
@@ -951,6 +1008,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
             workbook: wb,
             scope,
             columnKey: colKey,
+            selectedLocation: ed.selectedLocation || undefined,
             taskType: "grade",
             orderedAttendanceIds: null,
             attendanceIdsSet: null,
@@ -1017,12 +1075,13 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
           workbook: wb,
           scope,
           columnKey: colKey,
+          selectedLocation: ed.selectedLocation || undefined,
           taskType: "attendance",
           orderedAttendanceIds: orderedIds,
           attendanceIdsSet: parsed.targetIdsSet,
           gradesRows: null,
         });
-        
+
         // Store original parsed data for download functionality
         ed.originalInputData = {
           type: "attendance",
@@ -1046,12 +1105,13 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
           workbook: wb,
           scope,
           columnKey: colKey,
+          selectedLocation: ed.selectedLocation || undefined,
           taskType: "grade",
           orderedAttendanceIds: null,
           attendanceIdsSet: null,
           gradesRows: parsed.rows, // Use rows array from parsed result
         });
-        
+
         // Store original parsed data for download functionality
         ed.originalInputData = {
           type: "grade",
@@ -1982,16 +2042,23 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       allOptionsMap.set(opt.headerText.toLowerCase(), opt);
     }
     
-    // Then merge row 1 options
+    // Then merge row 1 options (avoid duplicating locations already in listColumnOptions row 1)
     for (const row1Opt of row1Options) {
       const headerLower = row1Opt.headerText.toLowerCase();
       const existing = allOptionsMap.get(headerLower);
       if (existing) {
-        // Merge row 1 locations into existing option (keep existing key which has correct kind)
-        existing.locations.push(...row1Opt.locations);
-        existing.occurrences += row1Opt.occurrences;
+        const existingSet = new Set(
+          (existing.locations || []).map((l) => `${l.sheet}\t${l.header_row}\t${l.col_letter}`)
+        );
+        for (const loc of row1Opt.locations || []) {
+          const key = `${loc.sheet}\t${loc.header_row}\t${loc.col_letter}`;
+          if (!existingSet.has(key)) {
+            existing.locations.push(loc);
+            existingSet.add(key);
+          }
+        }
+        existing.occurrences = existing.locations.length;
       } else {
-        // Add as new option (row 1 only, so key is unknown::HeaderText)
         allOptionsMap.set(headerLower, row1Opt);
       }
     }
@@ -2012,45 +2079,69 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       els.editorColumnSearchResults.style.display = "block";
       return;
     }
-    
-    // Display results
+
+    // Build flat list of occurrences (one row per location), deduplicated so each physical column appears once
+    /** @type {Array<{ opt: typeof results[0], loc: { sheet: string, header_row: number, col1: number, col_letter: string } }>} */
+    const occurrenceRows = [];
     for (const opt of results) {
+      const locations = deduplicateLocations(Array.isArray(opt.locations) ? opt.locations : []);
+      locations.forEach((loc) => {
+        occurrenceRows.push({ opt, loc });
+      });
+    }
+
+    for (const { opt, loc } of occurrenceRows) {
       const item = document.createElement("div");
       item.className = "columnSearchResults__item";
       item.dataset.columnKey = opt.key;
-      
+      item.dataset.locationSheet = loc.sheet;
+      item.dataset.locationHeaderRow = String(loc.header_row);
+      item.dataset.locationColLetter = loc.col_letter;
+
       const tag = opt.kind === "unknown" ? "Unknown" : opt.kind === "lecture" ? "Lecture" : "Section";
-      const locationsText = opt.locations && opt.locations.length > 0
-        ? opt.locations.map(l => `${l.sheet} (Row ${l.header_row})`).join(", ")
-        : "No locations";
-      
+      const positionText = `${loc.sheet} (Row ${loc.header_row}, Col ${loc.col_letter})`;
+
       item.innerHTML = `
         <div class="columnSearchResults__main">
-          <div class="columnSearchResults__header">${escapeHtml(opt.headerText)}</div>
-          <div class="columnSearchResults__meta">${tag} • ${opt.occurrences} occurrence(s) • ${locationsText}</div>
+          <div class="columnSearchResults__header">${escapeHtml(opt.headerText)} — ${tag}</div>
+          <div class="columnSearchResults__meta">${escapeHtml(positionText)}</div>
         </div>
       `;
-      
+
       els.editorColumnSearchResults.appendChild(item);
     }
-    
+
     els.editorColumnSearchResults.style.display = "block";
   }
   
   function handleEditorColumnSearchResultClicked(e) {
     const item = e?.target?.closest?.(".columnSearchResults__item");
     if (!item) return;
-    
+
     const columnKey = item.dataset.columnKey;
     if (!columnKey) return;
-    
-    // Set the selected column
-    if (els.editorColumn) {
-      els.editorColumn.value = columnKey;
-      state.editor.selectedColumnKey = columnKey;
+
+    const sheet = item.dataset.locationSheet;
+    const headerRow = Number.parseInt(item.dataset.locationHeaderRow || "0", 10);
+    const colLetter = item.dataset.locationColLetter;
+    const hasLocation = sheet && Number.isFinite(headerRow) && colLetter;
+
+    state.editor.selectedColumnKey = columnKey;
+    state.editor.selectedLocation = hasLocation
+      ? { sheet, header_row: headerRow, col_letter: colLetter }
+      : null;
+
+    if (els.editorColumn && hasLocation) {
+      const composite = `${columnKey}${COLUMN_VALUE_SEP}${sheet}${COLUMN_VALUE_SEP}${headerRow}${COLUMN_VALUE_SEP}${colLetter}`;
+      if (Array.from(els.editorColumn.options).some((opt) => opt.value === composite)) {
+        els.editorColumn.value = composite;
+      } else {
+        els.editorColumn.value = "";
+      }
+    } else if (els.editorColumn) {
+      els.editorColumn.value = "";
     }
-    
-    // Clear search
+
     if (els.editorColumnSearch) {
       els.editorColumnSearch.value = "";
     }
@@ -2058,8 +2149,11 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       els.editorColumnSearchResults.innerHTML = "";
       els.editorColumnSearchResults.style.display = "none";
     }
-    
-    // Update UI
+
+    if (hasLocation && setEditorStatus) {
+      setEditorStatus(`Using: ${sheet} Row ${headerRow}, Col ${colLetter}`, "ok");
+    }
+
     updateWizardUI();
   }
 

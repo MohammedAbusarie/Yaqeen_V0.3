@@ -25,6 +25,7 @@ export function createInitialState() {
       scopeMode: "single", // 'single' | 'multi'
       selectedSheetName: "",
       selectedColumnKey: "",
+      selectedLocation: null, // null | { sheet, header_row, col_letter } — when set, use only this column (from search)
       taskType: "attendance", // 'attendance' | 'grade'
 
       // input + preview

@@ -1010,6 +1010,7 @@ export function computeEditorPreview({
   workbook,
   scope,
   columnKey,
+  selectedLocation = null,
   taskType,
   orderedAttendanceIds,
   attendanceIdsSet,
@@ -1020,7 +1021,7 @@ export function computeEditorPreview({
 
   const opts = listColumnOptions(workbook, scope);
   let selected = opts.find((o) => o.key === columnKey) || null;
-  
+
   // If exact key match not found, try to find by header text (handles row 1 vs rows 2-5 key mismatch)
   if (!selected && columnKey) {
     const keyParts = String(columnKey).split("::");
@@ -1029,8 +1030,23 @@ export function computeEditorPreview({
       selected = opts.find((o) => o.headerText === headerText) || null;
     }
   }
-  
+
   if (!selected) throw new ValidationError("Selected column was not found in the workbook headers.");
+
+  // When user picked one occurrence from column search, use only that location
+  let locations = Array.isArray(selected.locations) ? selected.locations : [];
+  if (selectedLocation && selectedLocation.sheet && selectedLocation.col_letter != null) {
+    const match = locations.find(
+      (loc) =>
+        loc.sheet === selectedLocation.sheet &&
+        loc.header_row === selectedLocation.header_row &&
+        loc.col_letter === selectedLocation.col_letter
+    );
+    if (match) {
+      locations = [match];
+    }
+    // If no match found, fall back to all locations (e.g. scope changed)
+  }
 
   const task = String(taskType || "").toLowerCase();
   if (task !== "attendance" && task !== "grade") {
@@ -1072,7 +1088,6 @@ export function computeEditorPreview({
   }
 
   // For each sheet where the selected header exists, create mapping entry and use its column for edits.
-  const locations = Array.isArray(selected.locations) ? selected.locations : [];
   for (const loc of locations) {
     columnMap.push({
       sheet: loc.sheet,
