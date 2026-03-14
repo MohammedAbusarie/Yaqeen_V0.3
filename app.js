@@ -46,6 +46,7 @@ const els = {
   btnDownloadModifiedRecords: domGet("btnDownloadModifiedRecords"),
   btnDownloadOriginalRecords: domGet("btnDownloadOriginalRecords"),
   editorStatus: domGet("editorStatus"),
+  toastContainer: domGet("toastContainer"),
 
   // Wizard
   btnWizardPrev: domGet("btnWizardPrev"),

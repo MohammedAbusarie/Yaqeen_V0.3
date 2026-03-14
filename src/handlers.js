@@ -50,6 +50,24 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     els.editorStatus.classList.toggle("is-ok", kind === "ok");
   }
 
+  /**
+   * Show a short-lived toast message (e.g. "Added: ID — Name"). Does not block interaction.
+   * @param {string} message
+   * @param {{ duration?: number, kind?: 'ok'|'info'|'error' }} [options]
+   */
+  function showToast(message, options = {}) {
+    const container = els.toastContainer;
+    if (!container) return;
+    const duration = options.duration ?? 2500;
+    const kind = options.kind ?? "ok";
+    container.innerHTML = "";
+    const el = document.createElement("div");
+    el.className = `toast toast--${kind}`;
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), duration);
+  }
+
   /** Column option value encoding: key + location so dropdown and search stay in sync. Delimiter must not appear in sheet names. */
   const COLUMN_VALUE_SEP = "||";
 
@@ -894,7 +912,8 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     const chosen = state.editor.chosenStudents || [];
     const isDuplicate = chosen.some((s) => String(s.id) === id);
     if (isDuplicate) {
-      setEditorStatus("This ID is already in the list. Added again.", "info");
+      showToast("Already in list: " + id + (name ? " — " + name : ""), { kind: "info" });
+      return;
     }
 
     const taskType = state.editor.taskType || "attendance";
@@ -902,6 +921,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       state.editor.chosenStudents = [...chosen, { id, name, sheet, row1 }];
       renderEditorChosenList();
       updateWizardUI();
+      showToast("Added: " + id + (name ? " — " + name : ""));
       return;
     }
 
@@ -924,12 +944,21 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       return;
     }
     const chosen = state.editor.chosenStudents || [];
+    const id = String(editorPickGradePending.id || "");
+    const name = String(editorPickGradePending.name || "");
+    if (chosen.some((s) => String(s.id) === id)) {
+      editorPickGradePending = null;
+      els.editorPickGradeDialog?.close();
+      showToast("Already in list: " + id + (name ? " — " + name : ""), { kind: "info" });
+      return;
+    }
     state.editor.chosenStudents = [...chosen, { ...editorPickGradePending, grade }];
     editorPickGradePending = null;
     els.editorPickGradeDialog?.close();
     renderEditorChosenList();
     updateWizardUI();
     setEditorStatus("");
+    showToast("Added: " + id + (name ? " — " + name : ""));
   }
 
   function handleEditorChosenListRemove(e) {
