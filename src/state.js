@@ -28,9 +28,10 @@ export function createInitialState() {
       taskType: "attendance", // 'attendance' | 'grade'
 
       // input + preview
-      inputMethod: "file", // 'file' | 'textarea'
+      inputMethod: "file", // 'file' | 'textarea' | 'searchPick'
       inputFileName: "",
       inputTextContent: null, // For textarea input
+      chosenStudents: [], // For searchPick: { id, name?, sheet?, row1?, grade? }[]
       originalInputData: null, // Store original parsed data for download
       previewRows: null,
       columnMap: null,

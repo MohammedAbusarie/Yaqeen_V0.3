@@ -87,6 +87,15 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     // task
     if (els.editorTask) els.editorTask.value = ed.taskType;
 
+    // input method radios and container visibility
+    const method = ed.inputMethod || "file";
+    if (els.editorInputMethodFile) els.editorInputMethodFile.checked = method === "file";
+    if (els.editorInputMethodTextarea) els.editorInputMethodTextarea.checked = method === "textarea";
+    if (els.editorInputMethodSearchPick) els.editorInputMethodSearchPick.checked = method === "searchPick";
+    if (els.editorInputFileContainer) els.editorInputFileContainer.style.display = method === "file" ? "block" : "none";
+    if (els.editorInputTextareaContainer) els.editorInputTextareaContainer.style.display = method === "textarea" ? "block" : "none";
+    if (els.editorInputSearchPickContainer) els.editorInputSearchPickContainer.style.display = method === "searchPick" ? "block" : "none";
+
     if (els.btnEditorDownload) els.btnEditorDownload.disabled = !Array.isArray(ed.previewRows);
 
     // preview sheet filter
@@ -177,9 +186,11 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       }
       if (els.wizardSummaryTask) els.wizardSummaryTask.textContent = ed.taskType === "attendance" ? "Attendance input" : "Grade input";
       if (els.wizardSummaryInput) {
-        // Show different text based on input method
         if (ed.inputMethod === "file") {
           els.wizardSummaryInput.textContent = ed.inputFileName || "-";
+        } else if (ed.inputMethod === "searchPick") {
+          const n = Array.isArray(ed.chosenStudents) ? ed.chosenStudents.length : 0;
+          els.wizardSummaryInput.textContent = n > 0 ? `Search & pick: ${n} students` : "-";
         } else {
           const lineCount = ed.inputTextContent ? ed.inputTextContent.split('\n').length : 0;
           els.wizardSummaryInput.textContent = lineCount > 0 ? `Text area (${lineCount} lines)` : "-";
@@ -198,18 +209,18 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
         const needsSheet = ed.scopeMode === "single";
         return Boolean(ed.selectedColumnKey) && (!needsSheet || Boolean(ed.selectedSheetName));
       case 3:
-        // Check if we have valid input based on input method
         if (ed.inputMethod === "file") {
-          // File mode: check if a file is selected
           return Boolean(els.editorInputTxt?.files?.[0]);
-        } else {
-          // Textarea mode: check if textarea has content
-          return Boolean(ed.inputTextContent && ed.inputTextContent.trim());
         }
+        if (ed.inputMethod === "searchPick") {
+          return Array.isArray(ed.chosenStudents) && ed.chosenStudents.length > 0;
+        }
+        return Boolean(ed.inputTextContent && ed.inputTextContent.trim());
       case 4:
         return ed.workbookLoaded && Boolean(ed.selectedColumnKey) && (
           (ed.inputMethod === "file" && Boolean(els.editorInputTxt?.files?.[0])) ||
-          (ed.inputMethod === "textarea" && Boolean(ed.inputTextContent && ed.inputTextContent.trim()))
+          (ed.inputMethod === "textarea" && Boolean(ed.inputTextContent && ed.inputTextContent.trim())) ||
+          (ed.inputMethod === "searchPick" && Array.isArray(ed.chosenStudents) && ed.chosenStudents.length > 0)
         );
       default:
         return false;
@@ -561,9 +572,11 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
 
       // enable sheet select if applicable
       if (els.editorSheet) els.editorSheet.disabled = state.editor.scopeMode !== "single";
+      editorSearchRows = [];
+      state.editor.chosenStudents = [];
       setEditorStatus("Workbook loaded. Select mode/sheet/column and upload the input file.", "ok");
       syncEditorUiFromState();
-      
+
       // Don't auto-advance here - let handleWizardNext handle it
       updateWizardUI();
     } catch (e) {
@@ -608,10 +621,11 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
 
       // Rebuild columns if workbook is loaded
       if (state.editor.workbookLoaded) {
+        editorSearchRows = [];
         const wb = ensureWorkbookLoadedForEditor();
         const scope = { mode: state.editor.scopeMode, sheetName: state.editor.selectedSheetName };
         const opts = listColumnOptions(wb, scope);
-        
+
         // Store column options for search functionality
         state.editor.columnOptions = opts;
         
@@ -662,22 +676,39 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
 
   function handleEditorTaskChanged() {
     state.editor.taskType = String(els.editorTask?.value || "attendance");
+    if (state.editor.inputMethod === "searchPick") {
+      renderEditorChosenList();
+    }
     syncEditorUiFromState();
   }
 
   function handleEditorInputMethodChanged() {
     const isFile = els.editorInputMethodFile?.checked;
-    state.editor.inputMethod = isFile ? "file" : "textarea";
-    
-    // Show/hide appropriate input containers
+    const isSearchPick = els.editorInputMethodSearchPick?.checked;
+    state.editor.inputMethod = isSearchPick ? "searchPick" : (isFile ? "file" : "textarea");
+
+    if (!isSearchPick) {
+      state.editor.chosenStudents = [];
+    }
+
     if (els.editorInputFileContainer) {
       els.editorInputFileContainer.style.display = isFile ? "block" : "none";
     }
     if (els.editorInputTextareaContainer) {
-      els.editorInputTextareaContainer.style.display = isFile ? "none" : "block";
+      els.editorInputTextareaContainer.style.display = isSearchPick ? "none" : (isFile ? "none" : "block");
     }
-    
-    // Update wizard UI to check if we can proceed
+    if (els.editorInputSearchPickContainer) {
+      els.editorInputSearchPickContainer.style.display = isSearchPick ? "block" : "none";
+    }
+
+    if (isSearchPick) {
+      ensurePickSearchRows();
+      renderEditorChosenList();
+      if (els.editorPickSearch) els.editorPickSearch.value = "";
+      if (els.editorPickResults) els.editorPickResults.innerHTML = "";
+    }
+
+    syncEditorUiFromState();
     updateWizardUI();
   }
 
@@ -691,11 +722,175 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
   function handleEditorTextareaChanged() {
     const textarea = els.editorInputTextarea;
     if (!textarea) return;
-    
+
     const content = String(textarea.value || "").trim();
     state.editor.inputTextContent = content || null;
-    
+
     updateWizardUI();
+  }
+
+  function ensurePickSearchRows() {
+    if (editorSearchRows.length > 0) return;
+    try {
+      const wb = ensureWorkbookLoadedForEditor();
+      const ed = state.editor;
+      const scope = { mode: ed.scopeMode, sheetName: ed.selectedSheetName };
+      editorSearchRows = buildStudentSearchRows(wb, scope);
+    } catch (e) {
+      editorSearchRows = [];
+    }
+  }
+
+  function renderEditorChosenList() {
+    const container = els.editorChosenList;
+    const emptyEl = els.editorChosenListEmpty;
+    if (!container) return;
+    const chosen = state.editor.chosenStudents || [];
+    const taskType = state.editor.taskType || "attendance";
+
+    if (emptyEl) {
+      emptyEl.style.display = chosen.length === 0 ? "block" : "none";
+    }
+
+    container.innerHTML = "";
+    chosen.forEach((s, index) => {
+      const row = document.createElement("div");
+      row.className = "chosenList__item";
+      row.dataset.index = String(index);
+      const id = String(s.id || "");
+      const name = String(s.name || "").trim() || "—";
+      const grade = taskType === "grade" ? String(s.grade ?? "").trim() : "";
+      const text = taskType === "grade" && grade
+        ? `${id} — ${name} — ${grade}`
+        : `${id} — ${name}`;
+      const span = document.createElement("span");
+      span.className = "chosenList__text";
+      span.textContent = text;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn--ghost chosenList__remove";
+      btn.textContent = "Remove";
+      btn.dataset.index = String(index);
+      btn.setAttribute("aria-label", `Remove ${id} from list`);
+      row.appendChild(span);
+      row.appendChild(btn);
+      container.appendChild(row);
+    });
+  }
+
+  function handleEditorPickSearchChanged() {
+    if (!els.editorPickSearch || !els.editorPickResults) return;
+    const q = String(els.editorPickSearch.value || "").trim().toLowerCase();
+    els.editorPickResults.innerHTML = "";
+    if (!q) return;
+
+    ensurePickSearchRows();
+    if (editorSearchRows.length === 0) {
+      els.editorPickResults.innerHTML = '<div class="searchResults__empty">No student data. Load workbook and select sheet/column first.</div>';
+      return;
+    }
+
+    const results = [];
+    for (const r of editorSearchRows) {
+      const id = String(r.id || "");
+      const name = String(r.name || "");
+      if (id.toLowerCase().includes(q) || name.toLowerCase().includes(q)) results.push(r);
+      if (results.length >= 30) break;
+    }
+
+    if (results.length === 0) {
+      els.editorPickResults.innerHTML = '<div class="searchResults__empty">No students found matching your search.</div>';
+      return;
+    }
+
+    for (const r of results) {
+      const item = document.createElement("div");
+      item.className = "searchResults__item";
+      item.dataset.sheet = r.sheet;
+      item.dataset.row1 = String(r.row1);
+      item.dataset.id = r.id;
+      item.dataset.name = r.name;
+
+      const main = document.createElement("div");
+      main.className = "searchResults__main";
+      const line1 = document.createElement("div");
+      line1.innerHTML = `<span class="searchResults__id">${escapeHtml(r.id)}</span> — ${escapeHtml(r.name)}`;
+      const meta = document.createElement("div");
+      meta.className = "searchResults__meta";
+      meta.textContent = `Sheet: ${r.sheet} | Row: ${r.row1}`;
+      main.appendChild(line1);
+      main.appendChild(meta);
+      item.appendChild(main);
+      els.editorPickResults.appendChild(item);
+    }
+  }
+
+  let editorPickGradePending = null;
+
+  function handleEditorPickResultClicked(e) {
+    const node = e?.target?.closest?.(".searchResults__item");
+    if (!node || !node.closest("#editorPickResults")) return;
+    const sheet = String(node.dataset.sheet || "");
+    const row1 = Number.parseInt(String(node.dataset.row1 || ""), 10);
+    const id = String(node.dataset.id || "");
+    const name = String(node.dataset.name || "");
+
+    const chosen = state.editor.chosenStudents || [];
+    const isDuplicate = chosen.some((s) => String(s.id) === id);
+    if (isDuplicate) {
+      setEditorStatus("This ID is already in the list. Added again.", "info");
+    }
+
+    const taskType = state.editor.taskType || "attendance";
+    if (taskType === "attendance") {
+      state.editor.chosenStudents = [...chosen, { id, name, sheet, row1 }];
+      renderEditorChosenList();
+      updateWizardUI();
+      return;
+    }
+
+    editorPickGradePending = { id, name, sheet, row1 };
+    if (els.editorPickGradeDialogTitle) {
+      els.editorPickGradeDialogTitle.textContent = `Grade for ${id} — ${name}`;
+    }
+    if (els.editorPickGradeValue) {
+      els.editorPickGradeValue.value = "";
+    }
+    els.editorPickGradeDialog?.showModal();
+    els.editorPickGradeValue?.focus();
+  }
+
+  function handleEditorPickGradeAdd() {
+    if (!editorPickGradePending) return;
+    const grade = String(els.editorPickGradeValue?.value ?? "").trim();
+    if (!grade) {
+      setEditorStatus("Please enter a grade.", "error");
+      return;
+    }
+    const chosen = state.editor.chosenStudents || [];
+    state.editor.chosenStudents = [...chosen, { ...editorPickGradePending, grade }];
+    editorPickGradePending = null;
+    els.editorPickGradeDialog?.close();
+    renderEditorChosenList();
+    updateWizardUI();
+    setEditorStatus("");
+  }
+
+  function handleEditorChosenListRemove(e) {
+    const btn = e?.target?.closest?.(".chosenList__remove");
+    if (!btn) return;
+    const index = Number.parseInt(String(btn.dataset.index || ""), 10);
+    if (!Number.isFinite(index)) return;
+    const chosen = [...(state.editor.chosenStudents || [])];
+    if (index < 0 || index >= chosen.length) return;
+    chosen.splice(index, 1);
+    state.editor.chosenStudents = chosen;
+    renderEditorChosenList();
+    updateWizardUI();
+  }
+
+  function handleEditorPickGradeDialogClosed() {
+    editorPickGradePending = null;
   }
 
   async function handleEditorBuildPreview() {
@@ -712,6 +907,92 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       if (!colKey) throw new ValidationError("Please select a target column.");
       if (ed.scopeMode === "single" && !ed.selectedSheetName) throw new ValidationError("Please select a sheet.");
 
+      const task = String(ed.taskType || "attendance");
+      let preview;
+      let orderedEntries = null;
+      let idCounts = null;
+
+      if (ed.inputMethod === "searchPick") {
+        const chosen = ed.chosenStudents || [];
+        if (chosen.length === 0) throw new ValidationError("Add at least one student from the search results.");
+
+        if (task === "attendance") {
+          orderedEntries = chosen.map((s) => ({ type: "id", id: String(s.id) }));
+          const targetIdsSet = new Set(chosen.map((s) => String(s.id)));
+          idCounts = {};
+          for (const s of chosen) {
+            const sid = normalizeId(s.id);
+            if (sid) idCounts[sid] = (idCounts[sid] || 0) + 1;
+          }
+          const orderedIds = chosen.map((s) => String(s.id));
+          preview = computeEditorPreview({
+            workbook: wb,
+            scope,
+            columnKey: colKey,
+            taskType: "attendance",
+            orderedAttendanceIds: orderedIds,
+            attendanceIdsSet: targetIdsSet,
+            gradesRows: null,
+          });
+          ed.originalInputData = { type: "attendance", orderedEntries, idsSet: targetIdsSet };
+        } else {
+          const missingGrade = chosen.find((s) => !String(s.grade ?? "").trim());
+          if (missingGrade) {
+            throw new ValidationError("Enter a grade for each chosen student.");
+          }
+          const rows = chosen.map((s) => ({ id: String(s.id), grade: String(s.grade ?? "").trim() }));
+          orderedEntries = rows.map((r) => ({ type: "id", id: r.id, grade: r.grade }));
+          idCounts = {};
+          for (const s of chosen) {
+            const sid = normalizeId(s.id);
+            if (sid) idCounts[sid] = (idCounts[sid] || 0) + 1;
+          }
+          preview = computeEditorPreview({
+            workbook: wb,
+            scope,
+            columnKey: colKey,
+            taskType: "grade",
+            orderedAttendanceIds: null,
+            attendanceIdsSet: null,
+            gradesRows: rows,
+          });
+          ed.originalInputData = { type: "grade", orderedEntries, rows };
+        }
+        ed.previewRows = preview.preview_rows;
+        ed.columnMap = preview.column_map;
+        ed.selectedColumn = preview.selected_column;
+        ed.orderedEntries = orderedEntries;
+        ed.idCounts = idCounts;
+        editorSearchRows = buildStudentSearchRows(wb, scope);
+        if (els.editorPreviewSheetFilter) {
+          els.editorPreviewSheetFilter.disabled = false;
+          const sheetSet = new Set();
+          for (const r of ed.previewRows || []) {
+            const s = String(r.sheet || "").trim();
+            if (s) sheetSet.add(s);
+          }
+          const sheets = Array.from(sheetSet).sort();
+          els.editorPreviewSheetFilter.innerHTML = '<option value="">All Sheets</option>';
+          for (const s of sheets) {
+            const opt = document.createElement("option");
+            opt.value = s;
+            opt.textContent = s;
+            els.editorPreviewSheetFilter.appendChild(opt);
+          }
+        }
+        if (els.btnEditorDownload) els.btnEditorDownload.disabled = false;
+        if (els.btnDownloadModifiedRecords) els.btnDownloadModifiedRecords.disabled = false;
+        if (els.btnDownloadOriginalRecords) els.btnDownloadOriginalRecords.disabled = false;
+        if (els.btnDownloadJson) els.btnDownloadJson.disabled = false;
+        if (els.btnDownloadTxt) els.btnDownloadTxt.disabled = false;
+        if (els.btnDownloadPdf) els.btnDownloadPdf.disabled = false;
+        renderEditorPreview();
+        syncEditorUiFromState();
+        setEditorStatus("Preview generated. Review carefully, then download when ready.", "ok");
+        switchView("report");
+        return;
+      }
+
       // Get input text - either from file or textarea
       let inputText;
       if (ed.inputMethod === "file") {
@@ -719,18 +1000,12 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
         if (!inputFile) throw new ValidationError("Input .txt file is required.");
         inputText = await readFileAsText(inputFile);
       } else {
-        // textarea mode
         inputText = ed.inputTextContent;
         if (!inputText || !inputText.trim()) {
           throw new ValidationError("Please enter input data in the text area.");
         }
       }
 
-      const task = String(ed.taskType || "attendance");
-
-      let preview;
-      let orderedEntries = null;
-      let idCounts = null;
       if (task === "attendance") {
         const parsed = parseStudentIdsText(inputText);
         orderedEntries = parsed.orderedEntries; // Store for delimiter rendering
@@ -1546,6 +1821,13 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     handleEditorFixResultClicked,
     handleEditorGradeSaveClicked,
     handleDelimiterFilterChanged,
+
+    // Search & pick
+    handleEditorPickSearchChanged,
+    handleEditorPickResultClicked,
+    handleEditorPickGradeAdd,
+    handleEditorChosenListRemove,
+    handleEditorPickGradeDialogClosed,
 
     // Wizard navigation
     handleWizardPrev,

@@ -483,6 +483,11 @@ a:hover {
   letter-spacing: -0.2px;
 }
 
+/* Spacing between row groups in wizard steps */
+.wizard__row-group + .wizard__row-group {
+  margin-top: 32px;
+}
+
 .wizard__summary {
   background: var(--surface-elevated);
   border: 1px solid var(--border);
@@ -647,7 +652,26 @@ a:hover {
   cursor: pointer;
 }
 
-.hint { 
+/* Distinct groups within a field (e.g. Search & pick: search block + chosen block) */
+.field__group + .field__group {
+  margin-top: 28px;
+}
+
+.field__group label,
+.field__label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+.field__group .hint {
+  margin-top: 8px;
+}
+
+.hint {
   margin-top: 8px;
   font-size: 12px;
   color: var(--text-muted);
@@ -823,12 +847,71 @@ a:hover {
   align-items: center;
 }
 
-.labelInline { 
+.labelInline {
   margin: 0;
   white-space: nowrap;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
+}
+
+/* Input method radio group – compact, theme-matched */
+.inputMethodGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.inputMethodGroup__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.inputMethodGroup__option:hover {
+  color: var(--text-secondary);
+}
+
+.inputMethodGroup__option:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.inputMethodGroup__option input[type="radio"] {
+  appearance: none;
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-elevated);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.inputMethodGroup__option input[type="radio"]:checked {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 3px var(--primary);
+}
+
+.inputMethodGroup__option input[type="radio"]:hover {
+  border-color: var(--text-muted);
+}
+
+.inputMethodGroup__label {
+  user-select: none;
 }
 
 .summaryRow { 
@@ -1449,6 +1532,51 @@ textarea:focus {
   text-align: center;
   color: var(--text-muted);
   font-size: 14px;
+}
+
+/* Chosen list (Search & pick) */
+.chosenList {
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+}
+
+.chosenList__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.chosenList__item:last-child {
+  border-bottom: none;
+}
+
+.chosenList__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.chosenList__remove {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.chosenList__empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 8px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  background: var(--bg-secondary);
 }
 
 /* Scrollbar styling */

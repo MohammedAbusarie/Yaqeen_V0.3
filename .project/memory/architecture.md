@@ -63,6 +63,7 @@
 │ └── Responsibilities:
 │    - Render preview table (grouped-by-sheet or input-order)
 │    - Fix dialogs (search by ID/name) and manual grade edits (preview-only)
+│    - **Search & pick** input method: search students by ID/name from workbook, build chosen list; supports attendance and grade (grade entered at add time); duplicates allowed with warning
 │
 ├── Sheet Merger (New Feature)
 │ ├── File: `src/sheetMerger.js`
@@ -95,6 +96,7 @@
   - `targetIdsSet`: unique IDs used for matching
   - `idCounts`: global counts for duplicate IDs
   - `sectionIdCounts`: per-section counts (if titles/sections used)
+- **Search & pick input** (`state.editor.chosenStudents`): array of `{ id, name?, sheet?, row1?, grade? }`; converted to same shapes as file/textarea for `computeEditorPreview`
 - **Workbook scan result** (`attendance.js`)
   - `found_log`: `FoundLogEntry[]` (sheet, id, name, cell, header/data row hints)
   - `not_found_ids`: `string[]`

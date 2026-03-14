@@ -165,7 +165,7 @@
             <!-- Step 3: Input Data -->
             <div class="wizard__panel" data-panel="3" hidden>
               <h3 class="wizard__panel-title">Step 3: Input Data</h3>
-              <div class="grid2">
+              <div class="wizard__row-group grid2">
                 <div class="field">
                   <label for="editorTask">Task type</label>
                   <select id="editorTask">
@@ -176,20 +176,24 @@
 
                 <div class="field">
                   <label>Input method</label>
-                  <div style="display: flex; gap: 16px; margin-top: 8px;">
-                    <label class="labelInline">
-                      <input id="editorInputMethodFile" type="radio" name="editorInputMethod" value="file" checked style="margin-right: 6px;" />
-                      Upload file
+                  <div class="inputMethodGroup" role="group" aria-label="Input method">
+                    <label class="inputMethodGroup__option">
+                      <input id="editorInputMethodFile" type="radio" name="editorInputMethod" value="file" checked />
+                      <span class="inputMethodGroup__label">Upload file</span>
                     </label>
-                    <label class="labelInline">
-                      <input id="editorInputMethodTextarea" type="radio" name="editorInputMethod" value="textarea" style="margin-right: 6px;" />
-                      Enter text
+                    <label class="inputMethodGroup__option">
+                      <input id="editorInputMethodTextarea" type="radio" name="editorInputMethod" value="textarea" />
+                      <span class="inputMethodGroup__label">Enter text</span>
+                    </label>
+                    <label class="inputMethodGroup__option">
+                      <input id="editorInputMethodSearchPick" type="radio" name="editorInputMethod" value="searchPick" />
+                      <span class="inputMethodGroup__label">Search & pick</span>
                     </label>
                   </div>
                 </div>
               </div>
 
-              <div class="field" id="editorInputFileContainer">
+              <div class="wizard__row-group field" id="editorInputFileContainer">
                 <label for="editorInputTxt">Input file (<code>.txt</code>)</label>
                 <input id="editorInputTxt" type="file" accept=".txt,text/plain" />
                 <div class="hint">
@@ -198,12 +202,26 @@
                 </div>
               </div>
 
-              <div class="field" id="editorInputTextareaContainer" style="display: none;">
+              <div class="wizard__row-group field" id="editorInputTextareaContainer" style="display: none;">
                 <label for="editorInputTextarea">Enter data</label>
                 <textarea id="editorInputTextarea" rows="10" placeholder="Attendance: list of IDs (one per line, optional delimiter lines)&#10;Grades: id,grade per line"></textarea>
                 <div class="hint">
                   Attendance: list of IDs (one per line). You can add delimiter/title lines between sections.<br>
                   Grades: <code>id,grade</code> per line. You can add delimiter/title lines between sections.
+                </div>
+              </div>
+
+              <div class="wizard__row-group field field--block" id="editorInputSearchPickContainer" style="display: none;">
+                <div class="field__group">
+                  <label for="editorPickSearch">Search by ID or name</label>
+                  <input id="editorPickSearch" type="text" autocomplete="off" placeholder="Search by ID or name…" />
+                  <div id="editorPickResults" class="searchResults" aria-label="Search results" style="max-height: 200px; overflow-y: auto;"></div>
+                  <div class="hint">Click a result to add the student. For grade input, you will be prompted for the grade.</div>
+                </div>
+                <div class="field__group">
+                  <label class="field__label" for="editorChosenList">Chosen students</label>
+                  <div id="editorChosenList" class="chosenList" aria-label="Chosen students list"></div>
+                  <div id="editorChosenListEmpty" class="chosenList__empty">No students chosen. Search above and click a result to add.</div>
                 </div>
               </div>
             </div>
@@ -723,6 +741,23 @@
 
         <div class="actions" style="margin-top: 14px;">
           <button id="editorGradeSave" class="btn btn--primary" value="ok" type="submit">Save</button>
+          <button class="btn btn--ghost" value="cancel" type="submit">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="editorPickGradeDialog" class="modal">
+      <form method="dialog" class="modal__content">
+        <div class="modal__header">
+          <div class="modal__title" id="editorPickGradeDialogTitle">Enter grade</div>
+          <button class="btn btn--ghost" value="cancel" type="submit">Close</button>
+        </div>
+        <div class="field" style="margin-top: 12px;">
+          <label for="editorPickGradeValue">Grade</label>
+          <input id="editorPickGradeValue" type="text" autocomplete="off" placeholder="e.g. 15" />
+        </div>
+        <div class="actions" style="margin-top: 14px;">
+          <button id="editorPickGradeAdd" class="btn btn--primary" type="button">Add</button>
           <button class="btn btn--ghost" value="cancel" type="submit">Cancel</button>
         </div>
       </form>

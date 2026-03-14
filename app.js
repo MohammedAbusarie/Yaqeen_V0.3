@@ -28,10 +28,20 @@ const els = {
   editorXlsxFile: domGet("editorXlsxFile"),
   editorInputMethodFile: domGet("editorInputMethodFile"),
   editorInputMethodTextarea: domGet("editorInputMethodTextarea"),
+  editorInputMethodSearchPick: domGet("editorInputMethodSearchPick"),
   editorInputFileContainer: domGet("editorInputFileContainer"),
   editorInputTextareaContainer: domGet("editorInputTextareaContainer"),
+  editorInputSearchPickContainer: domGet("editorInputSearchPickContainer"),
   editorInputTxt: domGet("editorInputTxt"),
   editorInputTextarea: domGet("editorInputTextarea"),
+  editorPickSearch: domGet("editorPickSearch"),
+  editorPickResults: domGet("editorPickResults"),
+  editorChosenList: domGet("editorChosenList"),
+  editorChosenListEmpty: domGet("editorChosenListEmpty"),
+  editorPickGradeDialog: domGet("editorPickGradeDialog"),
+  editorPickGradeDialogTitle: domGet("editorPickGradeDialogTitle"),
+  editorPickGradeValue: domGet("editorPickGradeValue"),
+  editorPickGradeAdd: domGet("editorPickGradeAdd"),
   btnEditorDownload: domGet("btnEditorDownload"),
   btnDownloadModifiedRecords: domGet("btnDownloadModifiedRecords"),
   btnDownloadOriginalRecords: domGet("btnDownloadOriginalRecords"),
@@ -207,8 +217,14 @@ els.editorColumn?.addEventListener("change", handlers.handleEditorSelectionChang
 els.editorTask?.addEventListener("change", handlers.handleEditorTaskChanged);
 els.editorInputMethodFile?.addEventListener("change", handlers.handleEditorInputMethodChanged);
 els.editorInputMethodTextarea?.addEventListener("change", handlers.handleEditorInputMethodChanged);
+els.editorInputMethodSearchPick?.addEventListener("change", handlers.handleEditorInputMethodChanged);
 els.editorInputTxt?.addEventListener("change", handlers.handleEditorInputChanged);
 els.editorInputTextarea?.addEventListener("input", handlers.handleEditorTextareaChanged);
+els.editorPickSearch?.addEventListener("input", handlers.handleEditorPickSearchChanged);
+els.editorPickResults?.addEventListener("click", handlers.handleEditorPickResultClicked);
+els.editorChosenList?.addEventListener("click", handlers.handleEditorChosenListRemove);
+els.editorPickGradeAdd?.addEventListener("click", handlers.handleEditorPickGradeAdd);
+els.editorPickGradeDialog?.addEventListener("close", handlers.handleEditorPickGradeDialogClosed);
 
 // Editor wiring (Reports view - buttons are in Reports view now)
 els.btnEditorDownload?.addEventListener("click", handlers.handleEditorDownloadModified);
