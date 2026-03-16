@@ -187,9 +187,14 @@ if (els.featureCardsContainer) {
   });
 }
 
-// Back to Home (from any feature view)
+// Back navigation (from feature views)
 document.body.addEventListener("click", (e) => {
-  if (e.target.closest(".btnBackToHome")) switchView("home");
+  if (e.target.closest(".btnBackToHome")) {
+    switchView("home");
+  } else if (e.target.closest(".btnBackToInputs")) {
+    switchView("inputs");
+    handlers.updateWizardUI?.();
+  }
 });
 
 els.btnDownloadJson?.addEventListener("click", handlers.handleDownloadJson);

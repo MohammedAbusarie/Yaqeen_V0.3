@@ -901,6 +901,16 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
 
   let editorPickGradePending = null;
 
+  function resetEditorPickSearch({ clearValue = false, clearResults = false } = {}) {
+    if (els.editorPickSearch) {
+      if (clearValue) els.editorPickSearch.value = "";
+      els.editorPickSearch.focus();
+    }
+    if (clearResults && els.editorPickResults) {
+      els.editorPickResults.innerHTML = "";
+    }
+  }
+
   function handleEditorPickResultClicked(e) {
     const node = e?.target?.closest?.(".searchResults__item");
     if (!node || !node.closest("#editorPickResults")) return;
@@ -913,6 +923,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     const isDuplicate = chosen.some((s) => String(s.id) === id);
     if (isDuplicate) {
       showToast("Already in list: " + id + (name ? " — " + name : ""), { kind: "info" });
+      resetEditorPickSearch({ clearValue: false, clearResults: false });
       return;
     }
 
@@ -922,6 +933,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       renderEditorChosenList();
       updateWizardUI();
       showToast("Added: " + id + (name ? " — " + name : ""));
+      resetEditorPickSearch({ clearValue: true, clearResults: true });
       return;
     }
 
@@ -950,6 +962,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
       editorPickGradePending = null;
       els.editorPickGradeDialog?.close();
       showToast("Already in list: " + id + (name ? " — " + name : ""), { kind: "info" });
+      resetEditorPickSearch({ clearValue: false, clearResults: false });
       return;
     }
     state.editor.chosenStudents = [...chosen, { ...editorPickGradePending, grade }];
@@ -959,6 +972,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     updateWizardUI();
     setEditorStatus("");
     showToast("Added: " + id + (name ? " — " + name : ""));
+    resetEditorPickSearch({ clearValue: true, clearResults: true });
   }
 
   function handleEditorChosenListRemove(e) {
