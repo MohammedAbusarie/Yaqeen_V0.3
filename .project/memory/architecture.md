@@ -23,13 +23,13 @@
 │ └── Depends on: `src/*`, `viewer.js`
 │
 ├── Event Handlers / Orchestration
-│ ├── File: `src/handlers.js`
+│ ├── Files: `src/handlers.js` (barrel: `createHandlers`), `src/handlers/ocrHandlers.js`, `src/handlers/mergerHandlers.js`, `src/handlers/downloadHandlers.js`
 │ ├── Responsibilities:
 │ │  - Validate inputs
 │ │  - Load XLSX (upload or URL download)
 │ │  - Load/parse student IDs file
 │ │  - Run processing, generate report, update viewer
-│ │  - Export report files (JSON/TXT/PDF)
+│ │  - Export report files (JSON/TXT/PDF) — download/export handlers live in `downloadHandlers.js` (refs: `els`, `state`, `setEditorStatus`, `ensureWorkbookLoadedForEditor`, `renderEditorPreview`, `switchView`)
 │ │  - **Editor workflow**: load workbook to memory, list selectable headers, build preview, allow fixups, confirm + download modified XLSX
 │ │  - **Online sheet formulas**: generate per-sheet Google Sheets and Excel formulas from preview rows for static fill workflows
 │ └── Depends on: `attendance.js`, `report.js`, `src/*`
@@ -68,6 +68,7 @@
 │    - **Search & pick** input method: search students by ID/name from workbook, build chosen list; supports attendance and grade (grade entered at add time); duplicates allowed with warning
 │
 ├── Sheet Merger (New Feature)
+│ ├── UI handlers: `src/handlers/mergerHandlers.js` — `createMergerHandlers({ els, state })`, composed in `src/handlers.js`
 │ ├── File: `src/sheetMerger.js`
 │ ├── Responsibilities:
 │ │  - Scan headers from rows 1-5 across all sheets
@@ -134,6 +135,6 @@
   - Large sheets may take noticeable time to scan (loops across sheets/rows)
 
 ## Last Updated
-2026-03-21 | Added online-sheet formula panel flow (per-sheet Google/Excel formulas, static fill guidance)
+2026-03-29 | Added `src/handlers/downloadHandlers.js` for editor/report downloads (JSON/TXT/PDF/XLSX/text exports); composed by `src/handlers.js` with refs to `renderEditorPreview` and `switchView`
 
 

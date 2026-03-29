@@ -1,5 +1,9 @@
 # 🎓 Yaqeen Attendance Tool
 
+**Production deployment:** [https://precious-haupia-3c9ce7.netlify.app/](https://precious-haupia-3c9ce7.netlify.app/)
+
+The application is hosted on **[Netlify](https://www.netlify.com/)** as a **fully client-side** static site: assets are served over HTTPS while all workbook processing, previews, and exports run in the browser. There is no server-side application or database on the host, so operational **hosting cost is effectively zero** under Netlify’s free tier for static front-end projects.
+
 <div align="center">
 
 **Automated attendance & grades input • Time-saving • Privacy-first**
