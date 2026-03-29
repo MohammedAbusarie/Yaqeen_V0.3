@@ -1370,6 +1370,73 @@ a:hover {
   margin-top: 16px;
 }
 
+.formulaPanel {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
+
+.formulaPanel__intro {
+  margin: 8px 0 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.formulaPanel__steps {
+  margin: 0 0 12px 18px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.formulaPanel__list {
+  display: grid;
+  gap: 12px;
+}
+
+.formulaPanel__empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.formulaCard {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(20, 20, 20, 0.7);
+  padding: 12px;
+}
+
+.formulaCard__title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.formulaCard__note {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.formulaCard__label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 8px 0 6px;
+}
+
+.formulaCard__textarea {
+  min-height: 72px;
+}
+
+.formulaCard__copyBtn {
+  margin-top: 8px;
+}
+
 textarea {
   width: 100%;
   border: 1.5px solid var(--border);

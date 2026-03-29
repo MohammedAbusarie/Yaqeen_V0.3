@@ -65,6 +65,7 @@ const els = {
   editorPreviewSheetFilter: domGet("editorPreviewSheetFilter"),
   editorPreviewTableBody: domGet("editorPreviewTableBody"),
   editorFinalReportBox: domGet("editorFinalReportBox"),
+  editorFormulaPanels: domGet("editorFormulaPanels"),
   delimiterFilterContainer: domGet("delimiterFilterContainer"),
   editorDelimiterFilter: domGet("editorDelimiterFilter"),
 
@@ -252,6 +253,7 @@ els.editorPreviewModeGrouped?.addEventListener("click", handlers.handleEditorPre
 els.editorPreviewModeOrdered?.addEventListener("click", handlers.handleEditorPreviewModeChanged);
 els.editorPreviewSheetFilter?.addEventListener("change", handlers.handleEditorPreviewModeChanged);
 els.editorPreviewTableBody?.addEventListener("click", handlers.handleEditorPreviewRowAction);
+els.editorFormulaPanels?.addEventListener("click", handlers.handleEditorFormulaCopyClicked);
 els.editorColumnSearch?.addEventListener("input", handlers.handleEditorColumnSearchChanged);
 els.editorColumnSearchResults?.addEventListener("click", handlers.handleEditorColumnSearchResultClicked);
 

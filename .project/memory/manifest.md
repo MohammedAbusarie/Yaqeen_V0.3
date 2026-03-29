@@ -14,7 +14,7 @@
   - jsPDF (`window.jspdf`) + AutoTable (`doc.autoTable`)
 
 ## Last Updated
-2026-03-11
+2026-03-21
 
 ## Documentation
 - **`docs/`** — Project documentation. Contains:
@@ -39,5 +39,6 @@
 | 2025-12-27 | Add Sheet Merger feature with drag-and-drop column mapping | Approved | University workflow tool: merge columns from multiple sheets with different structures | New module `src/sheetMerger.js`, handlers in `src/handlers.js`, UI in `index.html`, styles in `styles.css` |
 | 2025-12-27 | Improve Sheet Merger UX with accordion grouping and search | Approved | Better scalability for workbooks with many sheets/columns | Added accordion grouping by sheet, search filtering, column counts, expand/collapse functionality |
 | 2026-03-11 | Rebrand to dark black, red, white theme; remove emojis from UI | Approved | Major website identity update | Theme variables and gradients updated in `styles.css`; legacy colors documented in `docs/theme-legacy-colors.md`; docs folder referenced in this manifest |
+| 2026-03-21 | Add per-sheet formula output panel for online-sheet static fill workflow | Approved | Reduce manual copy steps when transferring preview results to online sheets | Added dedicated report panel with Google/Excel formulas, copy buttons, and usage guidance in `index.html`, `src/handlers.js`, `app.js`, and `styles.css` |
 
 

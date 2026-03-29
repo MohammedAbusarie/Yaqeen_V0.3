@@ -110,6 +110,49 @@ This isn't just another attendance tool. It's a showcase of **advanced automatio
 - **Ordered output**: Preserves input file structure with section delimiters
 - **PDF generation**: Uses jsPDF + AutoTable for professional table formatting
 
+### 🧩 Additional tools, input methods & UX
+
+These capabilities are exposed from the home **feature cards** and related views (for example `#viewOcr`, sheet merger, formula panel, QR tool).
+
+#### **OCR Attendance Parser (experimental)**
+- **Tesseract.js + OpenCV.js**: Parse attendance sheet **images** in the browser
+- **Batch images**: Queue multiple images with progress tracking
+- **Confidence tiers**: Separates confident vs uncertain student IDs with **inline correction**
+- **Text export**: Generate a `.txt` attendance list from OCR output
+- **Dedicated workflow**: Step-by-step UI for load → process → review → export
+
+#### **Sheet Merger**
+- **Cross-sheet column mapping**: Drag-and-drop mapping across multiple sheets
+- **Per-sheet color coding**: Golden-angle HSL tinting so columns stay visually distinct
+- **Accordion + search**: Group by sheet, filter columns quickly at scale
+- **Dynamic matrix**: Add/remove mapped columns; optional **auto-fill** from header names and column-index proximity
+- **Duplicate headers**: Optional cleanup when the same header appears more than once
+- **Paginated preview**: Preview merged rows with **load more**; download a merged **XLSX** workbook
+
+#### **Online Sheet Formula Panel**
+- **Google Sheets**: Per-sheet **`ARRAYFORMULA`** snippets ready to copy
+- **Excel**: Per-sheet formulas using **`LET` / `XLOOKUP` / `SEQUENCE` / `INDEX`** patterns
+- **Row-aware ranges**: Computes sensible end rows per sheet (e.g. `getFormulaMaxRowForSheet`)
+- **Copy UX**: One-click copy with **toast** feedback
+
+#### **QR tool / YaqeenScan**
+- **Deployable scanner**: Feature entry for **`YaqeenScan.exe`** (placed under `downloads/` for static hosting)
+- **Dedicated view**: Marketing-style page describing the companion tool (`#viewQrTool`)
+
+#### **Search & Pick (third input method)**
+- Besides **file upload** and **textarea**, you can **search the loaded workbook** by student **ID or name**
+- **Build a pick list** with duplicate detection and toast feedback
+- **Grade tasks**: Optional **grade dialog** when picking students for grade entry
+
+#### **Home & wizard polish**
+- **Feature search**: Filter feature cards via keywords (`#featureSearch` / `data-search`)
+- **Splash screen**: Branded load animation (e.g. Yaqeen V0.3)
+- **Toast notifications**: `#toastContainer` for copy, add, duplicate, and similar actions
+- **Column search in wizard**: Live filter over column options plus **row-1 header scan** across sheets
+- **JSON round-trip**: Load a previously exported **JSON report** to restore preview without re-processing the workbook
+- **TXT exports — modified vs original**: Download **modified** attendance/grade lines and **original input** lines as separate text files
+- **Dark theme (current UI)**: Black / red / white identity; tuned for long sessions
+
 ---
 
 ## 🏗️ Technical Architecture
@@ -118,25 +161,28 @@ This isn't just another attendance tool. It's a showcase of **advanced automatio
 - **Frontend**: Vanilla JavaScript (ES Modules) - No frameworks, pure performance
 - **XLSX Processing**: [SheetJS (xlsx-js-style)](https://github.com/SheetJS/sheetjs) - Full workbook manipulation
 - **PDF Generation**: [jsPDF](https://github.com/parallax/jsPDF) + [AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable)
+- **OCR (experimental)**: [Tesseract.js](https://github.com/naptha/tesseract.js) + [OpenCV.js](https://docs.opencv.org/4.x/d5/d10/tutorial_js_root.html) (browser-side image parsing)
 - **Deployment**: Static site (Netlify-compatible, no build step required)
 
 ### **Project Structure**
 ```
 web/
-├── index.html          # Main UI with wizard workflow
-├── app.js             # Application entry point & DOM wiring
-├── attendance.js      # Core processing logic (1,091 lines)
-├── report.js          # Report generation engine
-├── viewer.js           # Report rendering & display
+├── index.html          # Main UI with wizard workflow & feature-card views
+├── app.js              # Application entry point & DOM wiring (~323 lines)
+├── attendance.js       # Core processing logic (~1,410 lines)
+├── report.js           # Report generation engine (~200 lines)
+├── downloads/          # Static assets for QR / YaqeenScan (e.g. README + optional .exe)
 ├── src/
-│   ├── handlers.js    # Event handlers & orchestration (1,480 lines)
-│   ├── state.js       # State management
-│   ├── navigation.js  # View switching
-│   ├── metadata.js    # Report metadata & filenames
-│   ├── fileRead.js    # File I/O helpers
-│   ├── dom.js         # DOM utilities
-│   └── uiStatus.js    # Status & loading UI
-└── styles.css         # Modern, responsive styling
+│   ├── handlers.js     # Event handlers & orchestration (~3,556 lines)
+│   ├── ocr.js          # OCR attendance parser (Tesseract + OpenCV pipeline)
+│   ├── sheetMerger.js  # Multi-sheet column merger UI + XLSX export
+│   ├── state.js        # State management
+│   ├── navigation.js   # View switching
+│   ├── metadata.js     # Report metadata & filenames
+│   ├── fileRead.js     # File I/O helpers
+│   ├── dom.js          # DOM utilities
+│   └── uiStatus.js     # Status & loading UI
+└── styles.css          # Styling (dark theme, responsive layout)
 ```
 
 ### **Key Algorithms & Techniques**
@@ -201,6 +247,7 @@ Handle authentication requirements gracefully
 3. **Input Your Data**
    - **Attendance**: Upload a `.txt` file with student IDs (one per line, supports section delimiters)
    - **Grades**: Upload a `.txt` file with `id,grade` format
+   - **Search & Pick**: Type or paste in the textarea, **or** search students by ID/name from the loaded workbook and build a pick list (with grade prompt when applicable)
 
 4. **Review & Edit**
    - Preview all changes before applying
@@ -211,6 +258,7 @@ Handle authentication requirements gracefully
 5. **Export**
    - Download modified workbook (with optional cell highlighting)
    - Export JSON, TXT, or PDF reports
+   - Optionally download **modified** vs **original** line lists as separate `.txt` files; reload a saved **JSON** report to restore preview
 
 ### **Input File Formats**
 
@@ -270,9 +318,15 @@ A 4-step wizard guides you through the process:
 
 ### **5. Multi-Format Export**
 - **Modified Workbook**: Download `.xlsx` with all changes applied
-- **JSON Report**: Structured data for programmatic use
+- **JSON Report**: Structured data for programmatic use (can be **re-loaded** to restore preview state)
 - **TXT Report**: Human-readable action report
+- **TXT — modified vs original**: Separate downloads for lines that reflect **applied edits** vs **raw input**
 - **PDF Report**: Professionally formatted table with summary
+
+### **6. Toasts, search helpers & home discovery**
+- **Toast notifications**: Inline feedback for copy, duplicates, list changes, and similar actions
+- **Wizard column search**: Quickly find columns by label across the workbook
+- **Home feature search**: Filter the feature grid by keywords
 
 ---
 
@@ -388,6 +442,8 @@ Built with:
 - [SheetJS](https://sheetjs.com/) - Excel file processing
 - [jsPDF](https://github.com/parallax/jsPDF) - PDF generation
 - [AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) - PDF table formatting
+- [Tesseract.js](https://github.com/naptha/tesseract.js) - In-browser OCR (experimental attendance parser)
+- [OpenCV.js](https://docs.opencv.org/4.x/d5/d10/tutorial_js_root.html) - Image preprocessing for OCR pipeline
 
 ---
 
@@ -397,7 +453,6 @@ Potential features for future versions:
 - Batch processing multiple weeks at once
 - Template-based column mapping
 - Import/export of configuration presets
-- Dark mode support
 - Mobile-responsive improvements
 
 ---

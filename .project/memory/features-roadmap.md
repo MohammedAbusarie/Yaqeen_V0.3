@@ -9,6 +9,7 @@
 ## Completed Features
 - Baseline static attendance report tool (XLSX + Student IDs → Report JSON/TXT/PDF)
 - In-browser workbook editor with preview/fix/confirm download
+- Per-sheet online-sheet formula output panel for grade/attendance preview (Google Sheets + Excel), with static-fill usage guidance (2026-03-21)
 - OCR experimental feature for attendance sheet image processing
 - Sheet Merger with drag-and-drop column mapping (2025-12-27)
 - Sheet Merger UX improvements: accordion grouping, search filtering, column counts (2025-12-27)

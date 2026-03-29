@@ -590,6 +590,23 @@
                 </div>
               </div>
 
+              <section class="formulaPanel" aria-label="Copy formulas for online sheets">
+                <div class="viewerTitle">Copy Formula for Online Sheet</div>
+                <p class="formulaPanel__intro">
+                  Generate one formula per affected sheet. Paste a formula in the header cell of a helper column in your online sheet, then copy that full column and paste values only to keep the final values permanent. Non-target rows keep their current target-column values.
+                </p>
+                <ol class="formulaPanel__steps">
+                  <li>In your online sheet, create a temporary helper column.</li>
+                  <li>Paste the formula where you want to start filling (row 1 is recommended).</li>
+                  <li>Wait for the bounded range to auto-fill (up to the shown max row).</li>
+                  <li>Copy the helper column and paste <strong>values only</strong> into your real target column.</li>
+                  <li>Delete the helper column (optional).</li>
+                </ol>
+                <div id="editorFormulaPanels" class="formulaPanel__list">
+                  <div class="formulaPanel__empty">Generate preview first to see formulas.</div>
+                </div>
+              </section>
+
               <div class="missing">
                 <div class="viewerTitle">Final column mapping report</div>
                 <textarea id="editorFinalReportBox" readonly rows="4">(Generate preview first)</textarea>

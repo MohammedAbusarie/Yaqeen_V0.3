@@ -31,6 +31,7 @@
 │ │  - Run processing, generate report, update viewer
 │ │  - Export report files (JSON/TXT/PDF)
 │ │  - **Editor workflow**: load workbook to memory, list selectable headers, build preview, allow fixups, confirm + download modified XLSX
+│ │  - **Online sheet formulas**: generate per-sheet Google Sheets and Excel formulas from preview rows for static fill workflows
 │ └── Depends on: `attendance.js`, `report.js`, `src/*`
 │
 ├── Core Processing (Pure-ish Logic + Explicit Errors)
@@ -57,6 +58,7 @@
 │ └── Responsibilities:
 │    - Render report table + summary
 │    - Optional “Ordered Input” mode if `ordered_rows` exists
+│    - Render formula copy panel for online-sheet post-processing workflow (one formula per sheet)
 │
 ├── Editor Preview Rendering (inline in Inputs view)
 │ ├── Files: `index.html`, `src/handlers.js`
@@ -132,6 +134,6 @@
   - Large sheets may take noticeable time to scan (loops across sheets/rows)
 
 ## Last Updated
-2026-03-11 | Docs folder added; theme identity documented (see `.project/memory/manifest.md` and `docs/theme-legacy-colors.md` for legacy palette)
+2026-03-21 | Added online-sheet formula panel flow (per-sheet Google/Excel formulas, static fill guidance)
 
 

@@ -68,6 +68,210 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     setTimeout(() => el.remove(), duration);
   }
 
+  /**
+   * Escape text for spreadsheet string literal (double quotes).
+   * @param {string} s
+   * @returns {string}
+   */
+  function escapeFormulaString(s) {
+    return String(s ?? "").replaceAll('"', '""');
+  }
+
+  /**
+   * 1-based max row for formula range: preview edits + sheet used range + any cell in target column.
+   * Keeps formulas covering the full target column extent (not only rows touched by the preview).
+   * @param {import('xlsx').WorkSheet|null|undefined} ws
+   * @param {string} targetColLetter
+   * @param {number} previewMaxRow
+   * @returns {number}
+   */
+  function getFormulaMaxRowForSheet(ws, targetColLetter, previewMaxRow) {
+    const XLSX = window.XLSX;
+    let max = Math.max(1, Number(previewMaxRow) || 1);
+    if (!ws || !XLSX?.utils) return max;
+
+    if (ws["!ref"]) {
+      try {
+        const rng = XLSX.utils.decode_range(ws["!ref"]);
+        max = Math.max(max, rng.e.r + 1);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const colWant = String(targetColLetter || "A").replace(/\d/g, "").toUpperCase();
+    if (!colWant) return Math.min(max, 1048576);
+
+    for (const addr of Object.keys(ws)) {
+      if (addr[0] === "!") continue;
+      let cell;
+      try {
+        cell = XLSX.utils.decode_cell(addr);
+      } catch {
+        continue;
+      }
+      const letter = XLSX.utils.encode_col(cell.c).toUpperCase();
+      if (letter !== colWant) continue;
+      max = Math.max(max, cell.r + 1);
+    }
+
+    return Math.min(Math.max(1, max), 1048576);
+  }
+
+  /**
+   * Build per-sheet formula payloads from preview rows.
+   * Includes only active rows that are matched/manually fixed and numeric values.
+   * @returns {Array<{sheet:string,rowCount:number,skippedCount:number,googleFormula:string,excelFormula:string}>}
+   */
+  function buildOnlineSheetFormulas() {
+    const ed = state.editor || {};
+    const rows = Array.isArray(ed.previewRows) ? ed.previewRows : [];
+    const headerName = escapeFormulaString(ed.selectedColumn?.headerText || "Target");
+    const bySheet = new Map();
+    const targetColBySheet = new Map();
+    const colMap = Array.isArray(ed.columnMap) ? ed.columnMap : [];
+    for (const loc of colMap) {
+      const sheet = String(loc?.sheet || "").trim();
+      const col = String(loc?.col_letter || "").trim().toUpperCase();
+      if (sheet && col) targetColBySheet.set(sheet, col);
+    }
+
+    for (const row of rows) {
+      const status = String(row?.match_status || "");
+      if (row?.discarded) continue;
+      if (!(status === "matched" || status === "manuallyFixed")) continue;
+      const sheet = String(row?.sheet || "").trim();
+      const rowIndex = Number(row?.row_index1);
+      const value = Number(row?.new_value);
+      if (!sheet || !Number.isFinite(rowIndex) || rowIndex < 1 || !Number.isFinite(value)) {
+        const existing = bySheet.get(sheet || "(Unknown sheet)") || { pairs: new Map(), skipped: 0 };
+        existing.skipped += 1;
+        bySheet.set(sheet || "(Unknown sheet)", existing);
+        continue;
+      }
+      const existing = bySheet.get(sheet) || { pairs: new Map(), skipped: 0 };
+      existing.pairs.set(rowIndex, value);
+      bySheet.set(sheet, existing);
+    }
+
+    const sheets = Array.from(bySheet.keys()).filter((s) => s && s !== "(Unknown sheet)").sort((a, b) => a.localeCompare(b));
+    /** @type {import('xlsx').WorkBook|null} */
+    let wbForFormulas = null;
+    try {
+      wbForFormulas = ensureWorkbookLoadedForEditor();
+    } catch {
+      wbForFormulas = null;
+    }
+
+    const out = [];
+    for (const sheet of sheets) {
+      const info = bySheet.get(sheet);
+      const pairs = Array.from(info.pairs.entries()).sort((a, b) => a[0] - b[0]);
+      if (!pairs.length) continue;
+      const targetCol = targetColBySheet.get(sheet) || "A";
+      const previewMaxRow = Math.max(1, ...pairs.map(([r]) => Number(r) || 1));
+      const ws = wbForFormulas?.Sheets?.[sheet];
+      const maxRow = ws ? getFormulaMaxRowForSheet(ws, targetCol, previewMaxRow) : previewMaxRow;
+      const mapLiteral = pairs.map(([r, v]) => `${r},${v}`).join(";");
+      const rangeRef = `${targetCol}1:${targetCol}${maxRow}`;
+      // Google: IFERROR(VLOOKUP, INDEX) — non-target rows copy existing target column; no LEN (breaks numbers / some values).
+      const googleFormula = `=IF(ROW()>${maxRow},"",ARRAYFORMULA(IF(ROW(INDIRECT(ROW()&":"&${maxRow}))=ROW(),"${headerName}",IFERROR(VLOOKUP(ROW(INDIRECT(ROW()&":"&${maxRow})),{${mapLiteral}},2,FALSE),INDEX(${rangeRef},ROW(INDIRECT(ROW()&":"&${maxRow})))))))`;
+      // Excel: if no map hit, always use bounded INDEX fallback (full column INDEX + dynamic arrays can fail to copy existing cells).
+      const excelFormula = `=LET(_start,ROW(),_n,MAX(1,${maxRow}-_start+1),_rows,SEQUENCE(_n,,_start,1),_m,{${mapLiteral}},_hit,IFERROR(XLOOKUP(_rows,INDEX(_m,,1),INDEX(_m,,2)),""),_fallback,INDEX(${rangeRef},_rows),IF(_rows=_start,"${headerName}",IF(_hit<>"",_hit,_fallback)))`;
+      out.push({
+        sheet,
+        targetCol,
+        maxRow,
+        previewMaxRow,
+        rowCount: pairs.length,
+        skippedCount: info.skipped,
+        googleFormula,
+        excelFormula,
+      });
+    }
+    return out;
+  }
+
+  function renderOnlineSheetFormulaPanel() {
+    if (!els.editorFormulaPanels) return;
+    const formulas = buildOnlineSheetFormulas();
+    els.editorFormulaPanels.innerHTML = "";
+    if (!formulas.length) {
+      const empty = document.createElement("div");
+      empty.className = "formulaPanel__empty";
+      empty.textContent =
+        "No eligible rows for formulas yet. Eligible rows are matched/manually fixed and not discarded, with numeric values.";
+      els.editorFormulaPanels.appendChild(empty);
+      return;
+    }
+
+    for (const item of formulas) {
+      const card = document.createElement("article");
+      card.className = "formulaCard";
+
+      const title = document.createElement("div");
+      title.className = "formulaCard__title";
+      title.textContent = `${item.sheet} (${item.rowCount} target rows)`;
+      card.appendChild(title);
+
+      const targetNote = document.createElement("div");
+      targetNote.className = "formulaCard__note";
+      const ext =
+        item.maxRow > item.previewMaxRow
+          ? ` Spans full sheet/target column through row ${item.maxRow} (preview edits only reached row ${item.previewMaxRow}).`
+          : ` Covers rows 1–${item.maxRow}.`;
+      targetNote.textContent = `Row-anchored; range ${item.targetCol}1:${item.targetCol}${item.maxRow}.${ext} Non-target rows copy existing values (IFERROR map miss → INDEX). If you loaded preview from JSON only, range may be limited to preview rows—reload the workbook to extend.`;
+      card.appendChild(targetNote);
+
+      if (item.skippedCount > 0) {
+        const note = document.createElement("div");
+        note.className = "formulaCard__note";
+        note.textContent = `${item.skippedCount} row(s) were skipped because their new value is not numeric.`;
+        card.appendChild(note);
+      }
+
+      const gLabel = document.createElement("div");
+      gLabel.className = "formulaCard__label";
+      gLabel.textContent = "Google Sheets formula";
+      card.appendChild(gLabel);
+
+      const gArea = document.createElement("textarea");
+      gArea.className = "formulaCard__textarea";
+      gArea.readOnly = true;
+      gArea.rows = 3;
+      gArea.value = item.googleFormula;
+      card.appendChild(gArea);
+
+      const gBtn = document.createElement("button");
+      gBtn.type = "button";
+      gBtn.className = "btn btn--ghost formulaCard__copyBtn";
+      gBtn.dataset.copyValue = item.googleFormula;
+      gBtn.textContent = "Copy Google formula";
+      card.appendChild(gBtn);
+
+      const eLabel = document.createElement("div");
+      eLabel.className = "formulaCard__label";
+      eLabel.textContent = "Excel formula";
+      card.appendChild(eLabel);
+
+      const eArea = document.createElement("textarea");
+      eArea.className = "formulaCard__textarea";
+      eArea.readOnly = true;
+      eArea.rows = 3;
+      eArea.value = item.excelFormula;
+      card.appendChild(eArea);
+
+      const eBtn = document.createElement("button");
+      eBtn.type = "button";
+      eBtn.className = "btn btn--ghost formulaCard__copyBtn";
+      eBtn.dataset.copyValue = item.excelFormula;
+      eBtn.textContent = "Copy Excel formula";
+      card.appendChild(eBtn);
+
+      els.editorFormulaPanels.appendChild(card);
+    }
+  }
+
   /** Column option value encoding: key + location so dropdown and search stay in sync. Delimiter must not appear in sheet names. */
   const COLUMN_VALUE_SEP = "||";
 
@@ -494,6 +698,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     
     // Apply delimiter filter if one is selected
     applyDelimiterFilter();
+    renderOnlineSheetFormulaPanel();
 
     // final report mapping box
     if (els.editorFinalReportBox) {
@@ -512,6 +717,19 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
         }
         els.editorFinalReportBox.value = lines.join("\n");
       }
+    }
+  }
+
+  async function handleEditorFormulaCopyClicked(e) {
+    const btn = e?.target?.closest?.("button[data-copy-value]");
+    if (!btn) return;
+    const text = String(btn.dataset.copyValue || "");
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("Formula copied.");
+    } catch {
+      showToast("Copy failed. Select the formula and copy manually.", { kind: "error" });
     }
   }
   async function handleEditorXlsxUploadChanged() {
@@ -1917,6 +2135,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     handleEditorBuildPreview,
     handleEditorPreviewModeChanged,
     handleEditorDownloadModified,
+    handleEditorFormulaCopyClicked,
 
     // Preview fixups
     handleEditorPreviewRowAction,
