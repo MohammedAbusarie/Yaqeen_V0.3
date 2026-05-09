@@ -74,6 +74,19 @@ export function createInitialState() {
       maxPositions: 10, // Dynamic column count, start with 10
       sheetColors: {}, // Map of sheet name to color for visual identification
     },
+    proctoring: {
+      // Proctoring Schedule feature state
+      url: "", // Effective URL being used
+      customUrl: "", // User-provided custom URL (persisted in localStorage)
+      defaultUrl: "https://docs.google.com/spreadsheets/d/1gfo7x1rDGvuyq3m1-bA7z2J5SsCVuWsHlrCXgcfvAuE/edit",
+      workbookArrayBuffer: null,
+      parsedData: null,
+      selectedName: "",
+      isLoading: false,
+      lastFetchTime: 0,
+      error: null,
+      autoRefreshIntervalId: null,
+    },
   };
 }
 

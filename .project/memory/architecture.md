@@ -83,6 +83,25 @@
 │    - `mergeColumnsSequentially()`: concatenate mapped columns
 │    - `generateMergedWorkbook()`: export merged data as XLSX
 │
+├── Proctoring Schedule Viewer (New Feature)
+│ ├── Parser: `src/proctoringParser.js`
+│ ├── UI handlers: `src/handlers/proctoringHandlers.js` — `createProctoringHandlers({ els, state, setStatus, switchView })`, composed in `src/handlers.js`
+│ ├── Responsibilities:
+│ │  - Parse Google Sheets workbook with exam proctoring schedules
+│ │  - Extract control room mappings from metadata sheet
+│ │  - Handle multi-name cells (newline-separated and space-separated with faculty suffixes)
+│ │  - Group proctors by sub-hall (column position within row)
+│ │  - Calculate assignment status (past/today/future) based on date/time
+│ │  - Render single flat table with filter dropdown
+│ │  - Filter by status (all/upcoming/today/passed)
+│ │  - Toggle "Dim Passed" (strikethrough + opacity)
+│ │  - Name search with autocomplete and normalized matching
+│ └── Key functions:
+│    - `parseProctoringWorkbook()`: main entry point for parsing
+│    - `splitProctorCell()`: extract individual proctors from cell text
+│    - `parseMetadataSheet()`: extract faculty → control room mappings
+│    - `filterScheduleForProctor()`: filter by proctor name
+│
 └── Internal Utilities
    ├── `src/state.js`: in-memory state container + reset
    ├── `src/navigation.js`: view switching (Inputs/Report/OCR/SheetMerger/About)
@@ -113,6 +132,12 @@
   - `ColumnInfo`: `{sheet, columnIndex, headerText, headerRow, columnLetter, sampleValues, key}`
   - `MergedData`: `{rows, headers, totalRows, totalColumns, sourceSheets}`
   - Mapping structure: `{[sheetName]: {[position]: columnKey}}`
+- **Proctoring Schedule Data Models** (`src/proctoringParser.js`)
+  - `ParsedProctoringData`: `{days, controlRooms, allProctorNames, notes, totalAssignments}`
+  - `DaySchedule`: `{dayArabic, dayEnglish, periodArabic, periodEnglish, date, assignments, dayStatus}`
+  - `ScheduleAssignment`: `{room, time, faculty, controlRoom, subHalls, status, startTime, endTime}`
+  - `SubHall`: `{groupIndex, proctors[]}`
+  - `ProctorEntry`: `{rawName, displayName, faculty, hasHonorific}`
 
 ## API Contract
 - **No backend API**. Everything runs in-browser.
@@ -135,6 +160,6 @@
   - Large sheets may take noticeable time to scan (loops across sheets/rows)
 
 ## Last Updated
-2026-03-29 | Added `src/handlers/downloadHandlers.js` for editor/report downloads (JSON/TXT/PDF/XLSX/text exports); composed by `src/handlers.js` with refs to `renderEditorPreview` and `switchView`
+2026-05-07 | Added Proctoring Schedule Viewer module with parser (`src/proctoringParser.js`), handlers (`src/handlers/proctoringHandlers.js`), and table-based UI; supports multi-name cell parsing, sub-hall grouping, status filtering, and "Dim Passed" toggle
 
 

@@ -2605,3 +2605,416 @@ textarea:focus {
   }
 }
 
+/* ============================================================================
+   Proctoring Schedule
+   ============================================================================ */
+
+.card--proctoring {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.proctoringCenter {
+  text-align: center;
+}
+
+.proctoringUrlStatus {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.proctoringUrlStatus--default {
+  color: var(--success);
+  background: var(--success-subtle);
+}
+
+.proctoringUrlStatus--custom {
+  color: var(--warning);
+  background: var(--warning-subtle);
+}
+
+.proctoringSuggestions {
+  margin-top: 4px;
+  background: var(--surface-elevated);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+  position: relative;
+  text-align: left;
+}
+
+.proctoringSuggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-bottom: 1px solid var(--border);
+}
+
+.proctoringSuggestion:last-child {
+  border-bottom: none;
+}
+
+.proctoringSuggestion:hover,
+.proctoringSuggestion:focus {
+  background: var(--surface-hover);
+  outline: none;
+}
+
+.proctoringNotes {
+  background: var(--warning-subtle);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+}
+
+.proctoringNotes__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--warning);
+  margin-bottom: 10px;
+}
+
+.proctoringNotes__list {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.proctoringNotes__list li {
+  margin-bottom: 6px;
+}
+
+/* Last Updated Badge */
+.lastUpdatedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+}
+
+.lastUpdatedBadge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.lastUpdatedBadge--none {
+  color: var(--text-muted);
+  background: var(--surface-elevated);
+}
+
+.lastUpdatedBadge--none::before {
+  background: var(--text-muted);
+}
+
+.lastUpdatedBadge--fresh {
+  color: var(--success);
+  background: var(--success-subtle);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.lastUpdatedBadge--fresh::before {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-subtle);
+}
+
+.lastUpdatedBadge--recent {
+  color: var(--warning);
+  background: var(--warning-subtle);
+  border-color: rgba(234, 179, 8, 0.35);
+}
+
+.lastUpdatedBadge--recent::before {
+  background: var(--warning);
+  box-shadow: 0 0 0 3px var(--warning-subtle);
+}
+
+.lastUpdatedBadge--stale {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.lastUpdatedBadge--stale::before {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-subtle);
+}
+
+/* Loading Spinner */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 0.8s linear infinite;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn--loading .spinner {
+  display: inline-block !important;
+}
+
+/* Filter Bar */
+.proctoringFilterBar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.proctoringFilterLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.proctoringFilterSelect {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--surface-elevated);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.proctoringFilterSelect:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--primary-subtle);
+}
+
+/* Results */
+.proctoringResults {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.proctoringResults__empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 16px;
+}
+
+/* Table styles */
+.proctoringTableWrap {
+  max-height: none;
+  overflow-x: auto;
+}
+
+.proctoringTable {
+  font-size: 15px;
+}
+
+.proctoringTable th {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  background: var(--surface-hover);
+  white-space: nowrap;
+  padding: 12px 16px;
+}
+
+.proctoringTable td {
+  font-size: 15px;
+  padding: 14px 16px;
+  vertical-align: top;
+}
+
+.proctoringRow--past {
+  opacity: 0.55;
+}
+
+.proctoringRow--past {
+  opacity: 0.55;
+}
+
+.proctoringRow--past td {
+  text-decoration: line-through;
+}
+
+.proctoringRow--past.no-dim {
+  opacity: 1;
+}
+
+.proctoringRow--past.no-dim td {
+  text-decoration: none;
+}
+
+/* Day separator row - visible line between different days */
+.proctoringRow--daySeparator {
+  height: 3px;
+  background: transparent;
+}
+
+.proctoringRow--daySeparator td {
+  height: 3px;
+  padding: 0;
+  background: linear-gradient(90deg, transparent 0%, var(--primary) 20%, var(--primary) 80%, transparent 100%);
+  opacity: 0.4;
+  border: none;
+}
+
+.proctoringCell--room {
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.proctoringCell--time {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.proctoringCell--status {
+  text-align: center;
+}
+
+.proctoringCell--proctors {
+  min-width: 200px;
+}
+
+/* Status pills */
+.statusPill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.statusPill--past {
+  color: #ffffff;
+  background: var(--success);
+}
+
+.statusPill--today {
+  color: #000000;
+  background: var(--warning);
+}
+
+.statusPill--future {
+  color: #ffffff;
+  background: var(--primary);
+}
+
+/* Proctor names in table */
+.proctorName {
+  display: inline-block;
+  padding: 3px 8px;
+  margin: 2px;
+  background: var(--surface-hover);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+
+.proctorName--match {
+  background: var(--primary-subtle);
+  border: 1px solid var(--primary);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.proctorFaculty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Sub-hall grouping */
+.subHallGroup {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.subHallGroup:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.subHallLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--warning);
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .proctoringTable {
+    font-size: 14px;
+  }
+
+  .proctoringTable td {
+    padding: 10px 12px;
+  }
+
+  .proctoringTable th {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .proctoringTableWrap {
+    font-size: 13px;
+  }
+
+  .proctoringTable th,
+  .proctoringTable td {
+    padding: 8px 10px;
+  }
+
+  .proctoringFilterBar {
+    justify-content: center;
+  }
+
+  .statusPill {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+

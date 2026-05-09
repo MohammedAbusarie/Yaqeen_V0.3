@@ -127,6 +127,25 @@ const els = {
   mergerStatus: domGet("mergerStatus"),
   mergerMappingStep: domGet("mergerMappingStep"),
   mergerPreviewStep: domGet("mergerPreviewStep"),
+
+  // Proctoring Schedule
+  viewProctoring: domGet("viewProctoring"),
+  proctoringSheetUrl: domGet("proctoringSheetUrl"),
+  btnProctoringLoad: domGet("btnProctoringLoad"),
+  proctoringLoadText: domGet("proctoringLoadText"),
+  proctoringLoadSpinner: domGet("proctoringLoadSpinner"),
+  btnProctoringResetUrl: domGet("btnProctoringResetUrl"),
+  proctoringUrlStatus: domGet("proctoringUrlStatus"),
+  proctoringNameSearch: domGet("proctoringNameSearch"),
+  proctoringNameSuggestions: domGet("proctoringNameSuggestions"),
+  proctoringLastUpdated: domGet("proctoringLastUpdated"),
+  proctoringStats: domGet("proctoringStats"),
+  proctoringNotes: domGet("proctoringNotes"),
+  proctoringResults: domGet("proctoringResults"),
+  proctoringStatus: domGet("proctoringStatus"),
+  proctoringStatusFilter: domGet("proctoringStatusFilter"),
+  btnToggleStrikethrough: domGet("btnToggleStrikethrough"),
+  strikethroughIcon: domGet("strikethroughIcon"),
 };
 
 const state = createInitialState();
@@ -289,6 +308,15 @@ els.mergerMappingMatrix?.addEventListener("dragover", handlers.handleMergerMatri
 els.mergerMappingMatrix?.addEventListener("drop", handlers.handleMergerMatrixDrop);
 els.mergerMappingMatrix?.addEventListener("click", handlers.handleMergerMatrixClick);
 
+  // Proctoring wiring
+  els.btnProctoringLoad?.addEventListener("click", handlers.handleProctoringLoad);
+  els.btnProctoringResetUrl?.addEventListener("click", handlers.handleProctoringResetUrl);
+  els.proctoringNameSearch?.addEventListener("input", handlers.handleProctoringNameInput);
+  els.proctoringNameSuggestions?.addEventListener("click", handlers.handleProctoringSuggestionClick);
+  els.proctoringNameSearch?.addEventListener("keydown", handlers.handleProctoringNameKeydown);
+  els.proctoringStatusFilter?.addEventListener("change", handlers.handleStatusFilterChange);
+  els.btnToggleStrikethrough?.addEventListener("click", handlers.handleToggleStrikethrough);
+
 // Initial state
 switchView("home");
 try {
@@ -302,6 +330,12 @@ try {
   }
 } catch (e) {
   console.error("Error initializing wizard UI:", e);
+}
+
+try {
+  handlers.initProctoring?.();
+} catch (e) {
+  console.error("Error initializing proctoring UI:", e);
 }
 
 // Footer year

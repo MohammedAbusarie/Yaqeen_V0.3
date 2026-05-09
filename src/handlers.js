@@ -16,6 +16,7 @@ import { readFileAsArrayBuffer, readFileAsText } from "./fileRead.js";
 import { createOcrHandlers } from "./handlers/ocrHandlers.js";
 import { createMergerHandlers } from "./handlers/mergerHandlers.js";
 import { createDownloadHandlers } from "./handlers/downloadHandlers.js";
+import { createProctoringHandlers } from "./handlers/proctoringHandlers.js";
 
 /**
  * @typedef {import('./state.js').AppState} AppState
@@ -36,6 +37,7 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
 
   const ocr = createOcrHandlers({ els, state });
   const merger = createMergerHandlers({ els, state });
+  const proctoring = createProctoringHandlers({ els, state, setStatus, switchView, showToast });
   const downloads = createDownloadHandlers({
     els,
     state,
@@ -1707,6 +1709,17 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     handleMergerColumnSearch: merger.handleMergerColumnSearch,
     handleMergerColumnGroupToggle: merger.handleMergerColumnGroupToggle,
     handleMergerAutoFill: merger.handleMergerAutoFill,
+
+    // Proctoring handlers
+    handleProctoringLoad: proctoring.handleProctoringLoad,
+    handleProctoringResetUrl: proctoring.handleProctoringResetUrl,
+    handleProctoringNameInput: proctoring.handleProctoringNameInput,
+    handleProctoringSuggestionClick: proctoring.handleProctoringSuggestionClick,
+    handleProctoringNameKeydown: proctoring.handleProctoringNameKeydown,
+    handleStatusFilterChange: proctoring.handleStatusFilterChange,
+    handleToggleStrikethrough: proctoring.handleToggleStrikethrough,
+    initProctoring: proctoring.initProctoring,
+    loadSchedule: proctoring.loadSchedule,
   };
   
   function applyDelimiterFilter() {

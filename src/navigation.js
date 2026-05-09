@@ -7,7 +7,7 @@
  * @param {'home'|'inputs'|'report'|'ocr'|'sheetMerger'|'qrTool'|'about'} viewName
  */
 export function switchView(getEl, viewName) {
-  const views = ["home", "inputs", "report", "ocr", "sheetMerger", "qrTool", "about"];
+  const views = ["home", "inputs", "report", "ocr", "sheetMerger", "qrTool", "proctoring", "about"];
   views.forEach((v) => {
     const id = v === "qrTool" ? "viewQrTool" : `view${v.charAt(0).toUpperCase() + v.slice(1)}`;
     const viewEl = getEl(id);
@@ -19,7 +19,7 @@ export function switchView(getEl, viewName) {
         if (navBtn) navBtn.classList.add("is-active");
       } else {
         viewEl.classList.remove("view--active");
-        if (v === "home" || v === "ocr" || v === "sheetMerger" || v === "qrTool") {
+        if (v === "home" || v === "ocr" || v === "sheetMerger" || v === "qrTool" || v === "proctoring") {
           viewEl.style.display = "none";
         }
         if (navBtn) navBtn.classList.remove("is-active");

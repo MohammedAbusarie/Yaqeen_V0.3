@@ -40,5 +40,6 @@
 | 2025-12-27 | Improve Sheet Merger UX with accordion grouping and search | Approved | Better scalability for workbooks with many sheets/columns | Added accordion grouping by sheet, search filtering, column counts, expand/collapse functionality |
 | 2026-03-11 | Rebrand to dark black, red, white theme; remove emojis from UI | Approved | Major website identity update | Theme variables and gradients updated in `styles.css`; legacy colors documented in `docs/theme-legacy-colors.md`; docs folder referenced in this manifest |
 | 2026-03-21 | Add per-sheet formula output panel for online-sheet static fill workflow | Approved | Reduce manual copy steps when transferring preview results to online sheets | Added dedicated report panel with Google/Excel formulas, copy buttons, and usage guidance in `index.html`, `src/handlers.js`, `app.js`, and `styles.css` |
+| 2026-05-07 | Add Proctoring Schedule Viewer feature | Approved | Allow TAs/proctors to view exam proctoring assignments from Google Sheets with name search, status filtering, and sub-hall grouping | New parser `src/proctoringParser.js` handles multi-name cells and faculty suffixes; handlers in `src/handlers/proctoringHandlers.js`; table-based UI with status pills (passed/today/upcoming), filter dropdown, and "Dim Passed" toggle; integrated into home feature cards |
 
 

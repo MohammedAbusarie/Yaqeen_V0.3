@@ -48,6 +48,10 @@
               <span class="featureCard__title">Attendance & Grades</span>
               <span class="featureCard__desc">Edit workbooks, mark attendance, input grades. Generate a preview and download the modified file.</span>
             </button>
+            <button type="button" class="featureCard" data-view="proctoring" data-search="proctor schedule exam midterm final room control" role="listitem">
+              <span class="featureCard__title">Proctoring Schedule</span>
+              <span class="featureCard__desc">View your exam proctoring assignments by name. Fetches from Google Sheets with live updates.</span>
+            </button>
             <button type="button" class="featureCard" data-view="report" data-search="attendance report view load upload json" role="listitem">
               <span class="featureCard__title">Attendance Report</span>
               <span class="featureCard__desc">View report results, upload a saved report JSON, or download JSON, TXT, PDF.</span>
@@ -504,6 +508,85 @@
           </div>
 
           <div id="mergerStatus" class="status" style="margin-top: 20px;" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- Proctoring Schedule View -->
+      <section id="viewProctoring" class="view" style="display: none;">
+        <div class="card card--proctoring">
+          <div class="viewToolbar">
+            <button type="button" class="btn btn--ghost btnBackToHome" aria-label="Back to Home">← Back to Home</button>
+          </div>
+          <div class="cardHeader">
+            <h2>Proctoring Schedule</h2>
+          </div>
+
+          <div class="proctoringCenter">
+            <!-- URL Configuration -->
+            <div class="proctoringUrlSection">
+              <div class="field" style="max-width: 800px; margin: 0 auto;">
+                <label for="proctoringSheetUrl">Google Sheet URL</label>
+                <input id="proctoringSheetUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/.../edit" autocomplete="off" />
+                <div class="hint">
+                  Default schedule URL is pre-filled. Paste your own to override it.
+                </div>
+              </div>
+              <div class="field" style="display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
+                <button id="btnProctoringLoad" class="btn btn--primary" type="button">
+                  <span id="proctoringLoadText">Load / Refresh</span>
+                  <span id="proctoringLoadSpinner" class="spinner" style="display: none;"></span>
+                </button>
+                <button id="btnProctoringResetUrl" class="btn btn--ghost" type="button" style="display: none;">Reset to Default</button>
+              </div>
+              <div id="proctoringUrlStatus" class="proctoringUrlStatus" style="display: none; text-align: center; margin-top: 8px;"></div>
+            </div>
+
+            <!-- Name Search -->
+            <div class="proctoringSearchSection" style="margin-top: 24px;">
+              <div class="field" style="max-width: 500px; margin: 0 auto;">
+                <label for="proctoringNameSearch">Search Your Name</label>
+                <input id="proctoringNameSearch" type="text" autocomplete="off" placeholder="Type your name…" disabled />
+                <div id="proctoringNameSuggestions" class="proctoringSuggestions" style="display: none;" aria-label="Name suggestions"></div>
+                <div class="hint">
+                  Start typing to filter proctor names from the loaded schedule.
+                </div>
+              </div>
+            </div>
+
+            <!-- Last Updated + Stats -->
+            <div class="proctoringMeta" style="margin-top: 16px; text-align: center;">
+              <div id="proctoringLastUpdated" class="proctoringLastUpdated">
+                <span class="lastUpdatedBadge lastUpdatedBadge--none">No schedule loaded yet</span>
+              </div>
+              <div id="proctoringStats" class="proctoringStats" style="color: var(--text-secondary); font-size: 14px; margin-top: 8px;"></div>
+            </div>
+          </div>
+
+          <!-- General Notes -->
+          <div id="proctoringNotes" class="proctoringNotes" style="display: none; margin-top: 16px;"></div>
+
+          <!-- Status Filter -->
+          <div class="proctoringFilterBar" style="margin-top: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <label for="proctoringStatusFilter" class="proctoringFilterLabel">Show</label>
+            <select id="proctoringStatusFilter" class="proctoringFilterSelect">
+              <option value="all">All Assignments</option>
+              <option value="future">Upcoming</option>
+              <option value="today">Today</option>
+              <option value="past">Already Done</option>
+            </select>
+            <button id="btnToggleStrikethrough" class="btn btn--ghost btn--small" type="button" title="Toggle dimming for passed exams">
+              <span id="strikethroughIcon">✓</span> Dim Passed
+            </button>
+          </div>
+
+          <!-- Schedule Results -->
+          <div id="proctoringResults" class="proctoringResults" style="margin-top: 16px;">
+            <div class="proctoringResults__empty">
+              <p>Load a schedule and search your name to see your proctoring assignments.</p>
+            </div>
+          </div>
+
+          <div id="proctoringStatus" class="status" style="margin-top: 20px;" aria-live="polite"></div>
         </div>
       </section>
 
