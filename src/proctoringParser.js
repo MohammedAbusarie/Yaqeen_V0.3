@@ -215,8 +215,9 @@ function levenshteinDistance(a, b) {
  * A whole-word difference (distance ≥ 2) means it's a different word, not a typo.
  *
  * Examples:
- *   "محمد حاتم" vs "محمد حتم"   → word[1] dist=1  → MATCH   (typo: missing ا)
- *   "فرح حمدي"  vs "فرح محمد"  → word[1] dist=2  → NO MATCH (different person)
+ *   "محمد حاتم" vs "محمد حتم"   → word[1]: ح=ح, dist=1  → MATCH   (typo: missing ا)
+ *   "فرح حمدي"  vs "فرح محمد"  → word[1]: ح≠م         → NO MATCH (different first letter)
+ *   "محمد ايهاب" vs "احمد ايهاب" → word[0]: م≠ا        → NO MATCH (different first letter)
  *
  * @param {string} name1
  * @param {string} name2
@@ -238,9 +239,12 @@ export function areNamesSimilar(name1, name2) {
   if (Math.abs(words1.length - words2.length) > 1) return false;
 
   if (words1.length === words2.length) {
-    // Every corresponding word must be within 1 edit.
     for (let i = 0; i < words1.length; i++) {
-      if (levenshteinDistance(words1[i], words2[i]) > 1) return false;
+      const w1 = words1[i];
+      const w2 = words2[i];
+      // Different first letter = different name, not a typo (محمد ≠ احمد).
+      if (w1[0] !== w2[0]) return false;
+      if (levenshteinDistance(w1, w2) > 1) return false;
     }
     return true;
   }
@@ -252,7 +256,11 @@ export function areNamesSimilar(name1, name2) {
 
   for (let skip = 0; skip < longer.length; skip++) {
     const aligned = longer.filter((_, i) => i !== skip);
-    if (aligned.every((w, i) => levenshteinDistance(w, shorter[i]) <= 1)) return true;
+    const allClose = aligned.every((w, i) => {
+      const s = shorter[i];
+      return w[0] === s[0] && levenshteinDistance(w, s) <= 1;
+    });
+    if (allClose) return true;
   }
 
   return false;
