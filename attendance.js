@@ -1033,9 +1033,18 @@ export function computeEditorPreview({
 
   if (!selected) throw new ValidationError("Selected column was not found in the workbook headers.");
 
-  // When user picked one occurrence from column search, use only that location
+  const scopeMode = scope?.mode === "single" ? "single" : "multi";
+
+  // Multi-sheet: chosen students may live in any sheet; honoring selectedLocation
+  // would falsely report students from other sheets as not found. Single-sheet:
+  // selectedLocation disambiguates between multiple occurrences of the same header.
   let locations = Array.isArray(selected.locations) ? selected.locations : [];
-  if (selectedLocation && selectedLocation.sheet && selectedLocation.col_letter != null) {
+  if (
+    scopeMode === "single" &&
+    selectedLocation &&
+    selectedLocation.sheet &&
+    selectedLocation.col_letter != null
+  ) {
     const match = locations.find(
       (loc) =>
         loc.sheet === selectedLocation.sheet &&
@@ -1070,7 +1079,6 @@ export function computeEditorPreview({
   const columnMap = [];
 
   // Build per-sheet student index once
-  const scopeMode = scope?.mode === "single" ? "single" : "multi";
   const selectedSheet = String(scope?.sheetName || "");
   const sheetNames =
     scopeMode === "single"

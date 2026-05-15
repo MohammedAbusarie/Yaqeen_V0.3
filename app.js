@@ -42,6 +42,9 @@ const els = {
   editorPickGradeDialogTitle: domGet("editorPickGradeDialogTitle"),
   editorPickGradeValue: domGet("editorPickGradeValue"),
   editorPickGradeAdd: domGet("editorPickGradeAdd"),
+  editorPickGradeForm: domGet("editorPickGradeForm"),
+  editorPickGradeClose: domGet("editorPickGradeClose"),
+  editorPickGradeCancel: domGet("editorPickGradeCancel"),
   btnEditorDownload: domGet("btnEditorDownload"),
   btnDownloadModifiedRecords: domGet("btnDownloadModifiedRecords"),
   btnDownloadOriginalRecords: domGet("btnDownloadOriginalRecords"),
@@ -249,7 +252,9 @@ els.editorInputTextarea?.addEventListener("input", handlers.handleEditorTextarea
 els.editorPickSearch?.addEventListener("input", handlers.handleEditorPickSearchChanged);
 els.editorPickResults?.addEventListener("click", handlers.handleEditorPickResultClicked);
 els.editorChosenList?.addEventListener("click", handlers.handleEditorChosenListRemove);
-els.editorPickGradeAdd?.addEventListener("click", handlers.handleEditorPickGradeAdd);
+els.editorPickGradeForm?.addEventListener("submit", handlers.handleEditorPickGradeFormSubmit);
+els.editorPickGradeClose?.addEventListener("click", handlers.handleEditorPickGradeCancelClicked);
+els.editorPickGradeCancel?.addEventListener("click", handlers.handleEditorPickGradeCancelClicked);
 els.editorPickGradeDialog?.addEventListener("close", handlers.handleEditorPickGradeDialogClosed);
 
 // Editor wiring (Reports view - buttons are in Reports view now)

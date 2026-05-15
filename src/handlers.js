@@ -1214,6 +1214,18 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     editorPickGradePending = null;
   }
 
+  function handleEditorPickGradeFormSubmit(e) {
+    // The dialog form uses method="dialog"; without this preventDefault the
+    // dialog auto-closes on submit before the add validation can run.
+    // Add is the only submit button, so this also handles Enter on the input.
+    if (e) e.preventDefault();
+    handleEditorPickGradeAdd();
+  }
+
+  function handleEditorPickGradeCancelClicked() {
+    if (els.editorPickGradeDialog) els.editorPickGradeDialog.close();
+  }
+
   async function handleEditorBuildPreview() {
     try {
       setEditorStatus("");
@@ -1674,6 +1686,8 @@ export function createHandlers({ els, state, setStatus, disableRun, switchView }
     handleEditorPickSearchChanged,
     handleEditorPickResultClicked,
     handleEditorPickGradeAdd,
+    handleEditorPickGradeFormSubmit,
+    handleEditorPickGradeCancelClicked,
     handleEditorChosenListRemove,
     handleEditorPickGradeDialogClosed,
 
