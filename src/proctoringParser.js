@@ -114,28 +114,165 @@ export function parseDateNumber(num) {
 /**
  * Extract day, date number, and period from a sheet name.
  *
- * Normalises before matching:
- *   - Alef variants (أ إ آ → ا): fixes "الأحد" → "الاحد", "الإثنين" → "الاثنين"
- *   - الفترة / الفتره / فترة / فتزه → فتره (all period-word variants)
- *   - Arabic diacritics stripped, whitespace collapsed
+ * Fully fuzzy: uses Levenshtein distance ≤ 2 for day names AND period
+ * ordinals, plus fuzzy matching for the period word itself (فتره).
+ * Handles any combination of: alef variants, teh marbuta, alef maqsura,
+ * missing spaces, ال prefixes, common typos, and diacritics.
  *
  * @param {string} sheetName
- * @returns {{day:string, dateNum:number|null, period:string, originalName:string}|null}
+ * @returns {{day:string, dateNum:number, period:string, originalName:string}|null}
  */
 export function parseSheetName(sheetName) {
   if (!sheetName || typeof sheetName !== "string") return null;
-  const normalized = sheetName
-    .replace(/الفترة|الفتره|فترة|فتزه/g, "فتره") // all period-word variants incl. ال prefix
-    .replace(/[إأآ]/g, "ا")              // الأحد → الاحد, الإثنين → الاثنين, etc.
-    .replace(/[ً-ٰٟ]/g, "") // strip Arabic diacritics if any
+
+  // Heavy normalisation: collapse all variant characters to canonical forms
+  const s = sheetName
+    .replace(/[إأآ]/g, "ا")       // alef variants → ا
+    .replace(/ى/g, "ي")            // alef maqsura → ي
+    .replace(/ة/g, "ه")            // teh marbuta → ه
+    .replace(/[\u064B-\u065F\u0670]/g, "") // strip diacritics
     .replace(/\s+/g, " ")
     .trim();
-  const regex = /^(السبت|الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة)\s*(\d+)\s+فتره\s+(اولي|تانيه|تالته|رابعه)$/;
-  const match = normalized.match(regex);
-  if (!match) return null;
-  return { day: match[1], dateNum: parseInt(match[2], 10), period: match[3], originalName: sheetName };
-}
 
+  if (!s) return null;
+
+  // ── 1. Day name (Levenshtein ≤ 2 per word) ────────────────────────────────
+  const DAY_NAMES = [
+    "السبت",   // Saturday
+    "الاحد",   // Sunday
+    "الاثنين", // Monday
+    "الثلاثاء", // Tuesday
+    "الاربعاء", // Wednesday
+    "الخميس",  // Thursday
+    "الجمعة",  // Friday
+  ];
+
+  let day = null;
+
+  // Fast path: exact substring
+  for (const d of DAY_NAMES) {
+    if (s.includes(d)) { day = d; break; }
+  }
+
+  // Fuzzy path: per-word Levenshtein ≤ 2 (covers الابعاء, الاربعه, etc.)
+  if (!day) {
+    for (const word of s.split(" ")) {
+      if (word.length < 4) continue;
+      let bestDay = null, bestDist = 3;
+      for (const d of DAY_NAMES) {
+        const dist = levenshteinDistance(word, d);
+        if (dist < bestDist) { bestDist = dist; bestDay = d; }
+      }
+      if (bestDay) { day = bestDay; break; }
+    }
+  }
+
+  if (!day) return null;
+
+  // ── 2. Date number (first digit sequence) ─────────────────────────────────
+  const numMatch = s.match(/\d+/);
+  if (!numMatch) return null;
+  const dateNum = parseInt(numMatch[0], 10);
+
+  // ── 3. Period word + ordinal (Levenshtein ≤ 2 per word) ──────────────────
+  // Known period word canonical form after normalisation
+  const PERIOD_WORD = "فتره";
+
+  // Known ordinal canonical forms after normalisation (ى→ي ة→ه already done)
+  const PERIOD_ORDINALS = [
+    { canonical: "اولي", matchers: ["اولي", "الاولي", "اوله", "اول"] },
+    { canonical: "تانيه", matchers: ["تانيه", "ثانيه", "الثانيه", "التانيه", "ثاني", "تاني"] },
+    { canonical: "تالته", matchers: ["تالته", "ثالثه", "الثالثه", "التالته", "ثالث", "تالت"] },
+    { canonical: "رابعه", matchers: ["رابعه", "الرابعه", "رابع", "اربعه"] },
+  ];
+
+  const words = s.split(" ");
+
+  // Find the period word by Levenshtein ≤ 2
+  let periodWordIndex = -1;
+  for (let i = 0; i < words.length; i++) {
+    if (levenshteinDistance(words[i], PERIOD_WORD) <= 2) {
+      periodWordIndex = i;
+      break;
+    }
+    // Also handle merged cases like "26فتره" (no space between number and period word)
+    const merged = words[i].replace(/^\d+/, "");
+    if (merged && levenshteinDistance(merged, PERIOD_WORD) <= 2) {
+      periodWordIndex = i;
+      break;
+    }
+  }
+
+  if (periodWordIndex === -1) return null;
+
+  // Find the ordinal: check the word after the period word, and also the
+  // word after that (in case ال is a separate word or ordinal is two words)
+  let period = null;
+  const candidateIndices = [periodWordIndex + 1, periodWordIndex + 2].filter(i => i < words.length);
+
+  // Also check the remainder of the period-word token itself (handles "فترهاولي" merged)
+  const pwRemainder = words[periodWordIndex].replace(/^.*?فتره/, "");
+  if (pwRemainder && pwRemainder.length >= 3) {
+    candidateIndices.unshift(-1); // sentinel for merged
+    words[-1] = pwRemainder.replace(/^[ال]+/, ""); // remove ال prefix from merged
+  }
+
+  for (const idx of candidateIndices) {
+    const candidate = (idx === -1) ? words[-1] : words[idx];
+    if (!candidate || candidate.length < 2) continue;
+
+    // Strip optional ال prefix from candidate before matching
+    const stripped = candidate.replace(/^ال/, "");
+
+    // First try exact match against all known forms
+    for (const ord of PERIOD_ORDINALS) {
+      for (const m of ord.matchers) {
+        if (m === stripped || m === candidate) {
+          return { day, dateNum, period: ord.canonical, originalName: sheetName };
+        }
+      }
+    }
+
+    // Fuzzy: pick the canonical form with the MINIMUM distance (not first within threshold)
+    let bestPeriod = null;
+    let bestDist = 3; // threshold: accept ≤ 2
+    for (const ord of PERIOD_ORDINALS) {
+      const dist = levenshteinDistance(stripped, ord.canonical);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestPeriod = ord.canonical;
+      }
+    }
+    if (bestPeriod) {
+      return { day, dateNum, period: bestPeriod, originalName: sheetName };
+    }
+  }
+
+  // Final fallback: scan ALL words for an ordinal by best fuzzy match
+  let bestPeriod = null;
+  let bestDist = 3;
+  for (const w of words) {
+    const stripped = w.replace(/^ال/, "");
+    for (const ord of PERIOD_ORDINALS) {
+      // Exact check first
+      for (const m of ord.matchers) {
+        if (m === stripped || m === w) {
+          return { day, dateNum, period: ord.canonical, originalName: sheetName };
+        }
+      }
+      const dist = levenshteinDistance(stripped, ord.canonical);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestPeriod = ord.canonical;
+      }
+    }
+  }
+  if (bestPeriod) {
+    return { day, dateNum, period: bestPeriod, originalName: sheetName };
+  }
+
+  return null;
+}
 function buildDateFromParsed(parsed) {
   if (!parsed || parsed.dateNum == null) return null;
   const dm = parseDateNumber(parsed.dateNum);
