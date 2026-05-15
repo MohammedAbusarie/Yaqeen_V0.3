@@ -113,7 +113,11 @@ export function parseDateNumber(num) {
 
 /**
  * Extract day, date number, and period from a sheet name.
- * Handles common typos like "فتزه" instead of "فتره" and missing spaces.
+ *
+ * Normalises before matching:
+ *   - Alef variants (أ إ آ → ا): fixes "الأحد" → "الاحد", "الإثنين" → "الاثنين"
+ *   - الفترة / الفتره / فترة / فتزه → فتره (all period-word variants)
+ *   - Arabic diacritics stripped, whitespace collapsed
  *
  * @param {string} sheetName
  * @returns {{day:string, dateNum:number|null, period:string, originalName:string}|null}
@@ -121,7 +125,9 @@ export function parseDateNumber(num) {
 export function parseSheetName(sheetName) {
   if (!sheetName || typeof sheetName !== "string") return null;
   const normalized = sheetName
-    .replace(/فتزه/g, "فتره")
+    .replace(/الفترة|الفتره|فترة|فتزه/g, "فتره") // all period-word variants incl. ال prefix
+    .replace(/[إأآ]/g, "ا")              // الأحد → الاحد, الإثنين → الاثنين, etc.
+    .replace(/[ً-ٰٟ]/g, "") // strip Arabic diacritics if any
     .replace(/\s+/g, " ")
     .trim();
   const regex = /^(السبت|الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة)\s*(\d+)\s+فتره\s+(اولي|تانيه|تالته|رابعه)$/;
