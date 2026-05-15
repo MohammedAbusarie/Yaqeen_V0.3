@@ -410,8 +410,8 @@ export function createProctoringHandlers(refs) {
     const normalizedQuery = normalizeProctorName(name);
     
     // Find all similar name variations for highlighting
-    const similarNames = state.proctoring.parsedData ? 
-      findSimilarNames(state.proctoring.parsedData.allProctorNames, name, 2) : [];
+    const similarNames = state.proctoring.parsedData ?
+      findSimilarNames(state.proctoring.parsedData.allProctorNames, name) : [];
     const normalizedSimilarNames = new Set(similarNames.map(n => normalizeProctorName(n)).filter(Boolean));
 
     // Flatten all rows into one array
@@ -447,10 +447,9 @@ export function createProctoringHandlers(refs) {
                     norm.includes(normalizedQuery) || 
                     normalizedQuery.includes(norm);
           
-          // Also check against all similar name variations
           if (!isMatch) {
             for (const similarNorm of normalizedSimilarNames) {
-              if (norm === similarNorm || areNamesSimilar(p.rawName, name, 2)) {
+              if (norm === similarNorm || areNamesSimilar(p.rawName, name)) {
                 isMatch = true;
                 break;
               }

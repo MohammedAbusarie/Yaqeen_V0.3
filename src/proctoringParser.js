@@ -208,75 +208,89 @@ function levenshteinDistance(a, b) {
 }
 
 /**
- * Check if two names are similar (1-2 character difference).
- * This handles spelling errors like "حمد حاتم" vs "محمد حاتم".
+ * Check if two names are similar enough to be considered typos of the same person.
+ *
+ * Strategy: compare word-by-word rather than whole-string Levenshtein.
+ * Each corresponding word must differ by at most 1 character edit.
+ * A whole-word difference (distance ≥ 2) means it's a different word, not a typo.
+ *
+ * Examples:
+ *   "محمد حاتم" vs "محمد حتم"   → word[1] dist=1  → MATCH   (typo: missing ا)
+ *   "فرح حمدي"  vs "فرح محمد"  → word[1] dist=2  → NO MATCH (different person)
  *
  * @param {string} name1
  * @param {string} name2
- * @param {number} [maxDistance=2]
  * @returns {boolean}
  */
-export function areNamesSimilar(name1, name2, maxDistance = 2) {
+export function areNamesSimilar(name1, name2) {
   if (!name1 || !name2) return false;
-  
-  // Normalize both names first
+
   const norm1 = normalizeProctorName(name1);
   const norm2 = normalizeProctorName(name2);
-  
+
   if (!norm1 || !norm2) return false;
   if (norm1 === norm2) return true;
-  
-  // Calculate edit distance
-  const distance = levenshteinDistance(norm1, norm2);
-  
-  // Allow up to maxDistance character differences
-  // Also consider the relative length - shorter names shouldn't match with very different long names
-  const maxLength = Math.max(norm1.length, norm2.length);
-  const minLength = Math.min(norm1.length, norm2.length);
-  
-  // If one name is significantly shorter, be more strict
-  if (maxLength > minLength + 3) {
-    return distance <= 1; // Be stricter for very different length names
+
+  const words1 = norm1.split(/\s+/);
+  const words2 = norm2.split(/\s+/);
+
+  // Names with very different word counts are structurally different people.
+  if (Math.abs(words1.length - words2.length) > 1) return false;
+
+  if (words1.length === words2.length) {
+    // Every corresponding word must be within 1 edit.
+    for (let i = 0; i < words1.length; i++) {
+      if (levenshteinDistance(words1[i], words2[i]) > 1) return false;
+    }
+    return true;
   }
-  
-  return distance <= maxDistance;
+
+  // Word counts differ by exactly 1: try each possible word-skip alignment.
+  const [shorter, longer] = words1.length < words2.length
+    ? [words1, words2]
+    : [words2, words1];
+
+  for (let skip = 0; skip < longer.length; skip++) {
+    const aligned = longer.filter((_, i) => i !== skip);
+    if (aligned.every((w, i) => levenshteinDistance(w, shorter[i]) <= 1)) return true;
+  }
+
+  return false;
 }
 
 /**
  * Find all names similar to the query from a list of names.
- * This groups spelling variations of the same person together.
+ * Returns exact/substring matches and word-level typo variants.
  *
  * @param {string[]} allNames
  * @param {string} query
- * @param {number} [maxDistance=2]
  * @returns {string[]}
  */
-export function findSimilarNames(allNames, query, maxDistance = 2) {
+export function findSimilarNames(allNames, query) {
   const normalizedQuery = normalizeProctorName(query);
   if (!normalizedQuery) return [];
-  
+
   const similarNames = [];
   const seen = new Set();
-  
+
   for (const name of allNames) {
     if (seen.has(name)) continue;
-    
-    // Check for exact match, substring match, or fuzzy match
+
     const normalizedName = normalizeProctorName(name);
     if (!normalizedName) continue;
-    
-    const isMatch = 
+
+    const isMatch =
       normalizedName === normalizedQuery ||
       normalizedName.includes(normalizedQuery) ||
       normalizedQuery.includes(normalizedName) ||
-      areNamesSimilar(name, query, maxDistance);
-    
+      areNamesSimilar(name, query);
+
     if (isMatch) {
       similarNames.push(name);
       seen.add(name);
     }
   }
-  
+
   return similarNames;
 }
 
@@ -724,8 +738,8 @@ export function filterScheduleForProctor(data, query) {
   const normalizedQuery = normalizeProctorName(query);
   if (!normalizedQuery) return [];
 
-  // Find all similar name variations from the allProctorNames list
-  const similarNames = findSimilarNames(data.allProctorNames, query, 2);
+  // Collect all name variants (exact/substring/typo) for this query.
+  const similarNames = findSimilarNames(data.allProctorNames, query);
   const normalizedSimilarNames = new Set(similarNames.map(n => normalizeProctorName(n)).filter(Boolean));
 
   const results = [];
@@ -736,18 +750,13 @@ export function filterScheduleForProctor(data, query) {
         sh.proctors.some((p) => {
           const norm = normalizeProctorName(p.rawName);
           if (!norm) return false;
-          
-          // Check for exact match or inclusion
-          const exactMatch = norm === normalizedQuery || norm.includes(normalizedQuery);
-          if (exactMatch) return true;
-          
-          // Check against all similar name variations
+
+          if (norm === normalizedQuery || norm.includes(normalizedQuery)) return true;
+
           for (const similarNorm of normalizedSimilarNames) {
-            if (norm === similarNorm || areNamesSimilar(p.rawName, query, 2)) {
-              return true;
-            }
+            if (norm === similarNorm || areNamesSimilar(p.rawName, query)) return true;
           }
-          
+
           return false;
         })
       );
@@ -759,8 +768,9 @@ export function filterScheduleForProctor(data, query) {
 }
 
 /**
- * Get autocomplete suggestions with fuzzy matching.
- * Groups similar names together to handle spelling variations.
+ * Get autocomplete suggestions for a query.
+ * Returns exact/substring matches first, then word-level typo variants.
+ * Different people who share a first name are shown as separate entries.
  *
  * @param {ParsedProctoringData} data
  * @param {string} query
@@ -772,58 +782,38 @@ export function getNameSuggestions(data, query, limit = 10) {
   const normalizedQuery = normalizeProctorName(query);
   if (!normalizedQuery) return data.allProctorNames.slice(0, limit);
 
-  // First, find exact/substring matches
+  // Exact / substring matches.
   const exactMatches = data.allProctorNames.filter((name) => {
     const norm = normalizeProctorName(name);
     return norm && (norm.includes(normalizedQuery) || normalizedQuery.includes(norm));
   });
 
-  // Then find fuzzy matches (similar names with 1-2 char differences)
+  // Word-level typo variants not already covered by substring matching.
   const fuzzyMatches = data.allProctorNames.filter((name) => {
-    // Skip if already in exact matches
     if (exactMatches.includes(name)) return false;
-    
-    const norm = normalizeProctorName(name);
-    if (!norm) return false;
-    
-    // Check if this name is similar to any name that matches the query
-    for (const exactMatch of exactMatches) {
-      if (areNamesSimilar(name, exactMatch, 2)) {
-        return true;
-      }
-    }
-    
-    // Also check direct similarity to query
-    return areNamesSimilar(name, query, 2);
+    return areNamesSimilar(name, query);
   });
 
-  // Combine and deduplicate - prioritize exact matches, then fuzzy
+  // Deduplicate typo variants: if two names are word-level typos of each other,
+  // keep only the longer (more complete) spelling.
   const combined = [...exactMatches, ...fuzzyMatches];
-  
-  // Remove duplicates that might be very similar to each other
-  // Keep the longest/most complete version as the primary display
   const uniqueNames = [];
   const seen = new Set();
-  
+
   for (const name of combined) {
     const norm = normalizeProctorName(name);
     if (!norm || seen.has(norm)) continue;
-    
-    // Check if this is similar to any already-seen name
-    let isDuplicate = false;
-    for (const seenName of uniqueNames) {
-      if (areNamesSimilar(name, seenName, 2)) {
-        // If similar, keep the longer/more complete name
-        if (name.length > seenName.length) {
-          const idx = uniqueNames.indexOf(seenName);
-          if (idx !== -1) uniqueNames[idx] = name;
-        }
-        isDuplicate = true;
+
+    let mergedIntoExisting = false;
+    for (let i = 0; i < uniqueNames.length; i++) {
+      if (areNamesSimilar(name, uniqueNames[i])) {
+        if (name.length > uniqueNames[i].length) uniqueNames[i] = name;
+        mergedIntoExisting = true;
         break;
       }
     }
-    
-    if (!isDuplicate) {
+
+    if (!mergedIntoExisting) {
       uniqueNames.push(name);
       seen.add(norm);
     }

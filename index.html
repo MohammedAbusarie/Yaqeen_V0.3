@@ -541,18 +541,6 @@
               <div id="proctoringUrlStatus" class="proctoringUrlStatus" style="display: none; text-align: center; margin-top: 8px;"></div>
             </div>
 
-            <!-- Name Search -->
-            <div class="proctoringSearchSection" style="margin-top: 24px;">
-              <div class="field" style="max-width: 500px; margin: 0 auto;">
-                <label for="proctoringNameSearch">Search Your Name</label>
-                <input id="proctoringNameSearch" type="text" autocomplete="off" placeholder="Type your name…" disabled />
-                <div id="proctoringNameSuggestions" class="proctoringSuggestions" style="display: none;" aria-label="Name suggestions"></div>
-                <div class="hint">
-                  Start typing to filter proctor names from the loaded schedule.
-                </div>
-              </div>
-            </div>
-
             <!-- Last Updated + Stats -->
             <div class="proctoringMeta" style="margin-top: 16px; text-align: center;">
               <div id="proctoringLastUpdated" class="proctoringLastUpdated">
@@ -565,8 +553,20 @@
           <!-- General Notes -->
           <div id="proctoringNotes" class="proctoringNotes" style="display: none; margin-top: 16px;"></div>
 
+          <!-- Name Search — lives here, directly above the filter + results it controls -->
+          <div class="proctoringSearchSection" style="margin-top: 24px;">
+            <div class="field" style="max-width: 500px; margin: 0 auto;">
+              <label for="proctoringNameSearch">Search Your Name</label>
+              <input id="proctoringNameSearch" type="text" autocomplete="off" placeholder="Type your name…" disabled />
+              <div id="proctoringNameSuggestions" class="proctoringSuggestions" style="display: none;" aria-label="Name suggestions"></div>
+              <div class="hint">
+                Start typing to filter proctor names from the loaded schedule.
+              </div>
+            </div>
+          </div>
+
           <!-- Status Filter -->
-          <div class="proctoringFilterBar" style="margin-top: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="proctoringFilterBar" style="margin-top: 16px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap;">
             <label for="proctoringStatusFilter" class="proctoringFilterLabel">Show</label>
             <select id="proctoringStatusFilter" class="proctoringFilterSelect">
               <option value="all">All Assignments</option>
