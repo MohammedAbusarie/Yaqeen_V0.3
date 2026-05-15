@@ -78,7 +78,7 @@ export function createInitialState() {
       // Proctoring Schedule feature state
       url: "", // Effective URL being used
       customUrl: "", // User-provided custom URL (persisted in localStorage)
-      defaultUrl: "https://docs.google.com/spreadsheets/d/1gfo7x1rDGvuyq3m1-bA7z2J5SsCVuWsHlrCXgcfvAuE/edit",
+      defaultUrl: "https://docs.google.com/spreadsheets/d/1x8nUhvnBHdqcByMvW5Qj86ksh0pdcax-UjtVa8j2D_c/edit?gid=650125919#gid=650125919",
       workbookArrayBuffer: null,
       parsedData: null,
       selectedName: "",
