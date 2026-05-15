@@ -3018,3 +3018,203 @@ textarea:focus {
   }
 }
 
+/* ── Proctoring: card layout on mobile (≤ 640px) ── */
+@media (max-width: 640px) {
+  /* Wrapper: drop the scroll box — cards flow naturally */
+  .proctoringTableWrap {
+    overflow-x: visible;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* Reset table chrome */
+  .proctoringTable {
+    display: block;
+    min-width: unset;
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+  }
+
+  .proctoringTable thead {
+    display: none;
+  }
+
+  .proctoringTable tbody {
+    display: block;
+  }
+
+  /* Each data row → card */
+  .proctoringRow {
+    display: flex;
+    flex-wrap: wrap;
+    background: var(--surface-elevated);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  /* Base cell style: label stacked above value */
+  .proctoringTable td {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 9px 12px;
+    border: none;
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    box-sizing: border-box;
+    white-space: normal;
+    font-size: 14px;
+    vertical-align: unset;
+    text-align: left;
+  }
+
+  /* Label via ::before */
+  .proctoringTable td::before {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    line-height: 1;
+  }
+
+  .proctoringTable td.proctoringCell--date::before    { content: "Date"; }
+  .proctoringTable td.proctoringCell--day::before     { content: "Day"; }
+  .proctoringTable td.proctoringCell--period::before  { content: "Period"; }
+  .proctoringTable td.proctoringCell--time::before    { content: "Time"; }
+  .proctoringTable td.proctoringCell--room::before    { content: "Room"; }
+  .proctoringTable td.proctoringCell--faculty::before { content: "Faculty"; }
+  .proctoringTable td.proctoringCell--control::before { content: "Control"; }
+  .proctoringTable td.proctoringCell--proctors::before { content: "Proctors"; }
+  .proctoringTable td.proctoringCell--status::before  { display: none; }
+
+  /* Cell order + widths (status header, then 2-column pairs, then full-width).
+     Use .proctoringTable td.proctoringCell--X to beat .proctoringTable td specificity. */
+  .proctoringTable td.proctoringCell--status  { order: 0; width: 100%; border-top: none; border-bottom: 1px solid var(--border); flex-direction: row; align-items: center; background: var(--surface); }
+  .proctoringTable td.proctoringCell--date    { order: 1; width: 50%; }
+  .proctoringTable td.proctoringCell--day     { order: 2; width: 50%; border-left: 1px solid var(--border); }
+  .proctoringTable td.proctoringCell--period  { order: 3; width: 50%; }
+  .proctoringTable td.proctoringCell--time    { order: 4; width: 50%; border-left: 1px solid var(--border); white-space: normal; }
+  .proctoringTable td.proctoringCell--room    { order: 5; width: 50%; }
+  .proctoringTable td.proctoringCell--control { order: 6; width: 50%; border-left: 1px solid var(--border); }
+  .proctoringTable td.proctoringCell--faculty { order: 7; width: 100%; }
+  .proctoringTable td.proctoringCell--proctors { order: 8; width: 100%; min-width: unset; flex-direction: column; }
+
+  /* Status cell header tint per assignment state */
+  .proctoringRow--today  .proctoringCell--status { background: var(--warning-subtle); }
+  .proctoringRow--future .proctoringCell--status { background: var(--primary-subtle); }
+  .proctoringRow--past   .proctoringCell--status { background: var(--success-subtle); }
+
+  /* Past row: use opacity instead of strikethrough (labels would also be struck through) */
+  .proctoringRow--past {
+    opacity: 0.6;
+  }
+
+  .proctoringRow--past td {
+    text-decoration: none;
+  }
+
+  .proctoringRow--past.no-dim {
+    opacity: 1;
+  }
+
+  .proctoringRow--past.no-dim td {
+    text-decoration: none;
+  }
+
+  /* Day separator → thin accent line */
+  .proctoringRow--daySeparator {
+    display: block;
+    width: 100%;
+    height: 2px;
+    padding: 0;
+    background: linear-gradient(90deg, transparent 0%, var(--primary) 25%, var(--primary) 75%, transparent 100%);
+    border: none;
+    border-radius: 0;
+    margin: 4px 0 16px;
+    opacity: 0.45;
+    overflow: visible;
+  }
+
+  .proctoringRow--daySeparator td {
+    display: none;
+  }
+
+  /* Remove base-table hover on cards */
+  .proctoringTable tbody tr:hover {
+    background: transparent;
+  }
+
+  .proctoringRow:hover {
+    border-color: var(--border-focus);
+  }
+
+  /* Assignment stats: stack vertically on mobile */
+  .proctoringAssignmentStats > div {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  /* Filter bar: stacked, full-width controls */
+  .proctoringFilterBar {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .proctoringFilterSelect {
+    width: 100%;
+    font-size: 16px;
+    padding: 10px 14px;
+    min-height: 44px;
+  }
+
+  #btnToggleStrikethrough {
+    width: 100%;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  /* Name search: larger tap target, prevent iOS zoom (font-size ≥ 16px) */
+  #proctoringNameSearch {
+    font-size: 16px;
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  /* Load button group: stack full-width */
+  .proctoringButtonGroup {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100%;
+  }
+
+  #btnProctoringLoad,
+  #btnProctoringResetUrl {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  /* URL input: prevent iOS zoom */
+  #proctoringSheetUrl {
+    font-size: 16px;
+    min-height: 44px;
+  }
+
+  /* Suggestions: larger tap targets */
+  .proctoringSuggestion {
+    padding: 14px 16px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+}
+
