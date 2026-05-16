@@ -353,7 +353,7 @@ export function createProctoringHandlers(refs) {
       const m = String(d.getMinutes()).padStart(2, "0");
       return `${h}:${m}`;
     };
-    const period = end.getHours() < 12 ? "AM" : "PM";
+    const period = start.getHours() < 12 ? "AM" : "PM";
     return `${fmt(start)} - ${fmt(end)} ${period}`;
   }
 
