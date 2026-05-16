@@ -348,8 +348,13 @@ export function createProctoringHandlers(refs) {
 
   function formatTimeRange(start, end) {
     if (!start || !end) return "";
-    const fmt = (d) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
-    return `${fmt(start)} - ${fmt(end)}`;
+    const fmt = (d) => {
+      const h = d.getHours() % 12 || 12;
+      const m = String(d.getMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    };
+    const period = end.getHours() < 12 ? "AM" : "PM";
+    return `${fmt(start)} - ${fmt(end)} ${period}`;
   }
 
   function renderScheduleForName(name) {

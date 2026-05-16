@@ -554,7 +554,12 @@ function parseTimeSlot(timeStr, baseDate) {
   const match = timeStr.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
   if (!match) return { start: null, end: null };
 
-  const [, sh, sm, eh, em] = match.map((n) => parseInt(n, 10));
+  let [, sh, sm, eh, em] = match.map((n) => parseInt(n, 10));
+
+  // University exams run 8 AM – 5 PM. Hours 1–7 cannot be AM slots;
+  // they are 12-hour PM values (1→13, 2→14 … 7→19).
+  if (sh >= 1 && sh <= 7) sh += 12;
+  if (eh >= 1 && eh <= 7) eh += 12;
 
   const start = new Date(baseDate);
   start.setHours(sh, sm, 0, 0);
@@ -562,7 +567,6 @@ function parseTimeSlot(timeStr, baseDate) {
   const end = new Date(baseDate);
   end.setHours(eh, em, 0, 0);
 
-  // Handle cases where end time appears earlier (e.g., 11:00 - 01:00 means next day)
   if (end < start) {
     end.setDate(end.getDate() + 1);
   }
